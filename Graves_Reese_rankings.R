@@ -1,5 +1,5 @@
 
-raw_results <- read.csv("~/Dropbox/Lacrosse/MCLA scores.csv", stringsAsFactors = FALSE)
+raw_results <- read.csv("~/Dropbox/Lacrosse/Rankings/MCLA-rankings/MCLA scores.csv", stringsAsFactors = FALSE)
 
 results <- raw_results[, c("Home.Team", "Away.Team")]
 results$Winning.Team <- "Home"
@@ -38,8 +38,13 @@ teams <- unique(c(results$Home.Team, results$Away.Team))
 
 
 
-calculateG <- function(results, rankings, sigma, alpha){
+calculateG <- function(results, rankings, sigma, alpha, team_name){
+  if(!is.null(team_name)){
+    results <- results[results$Home.Team == team_name | results$Away.Team == team_name, ]
+  }
+    
   probabilities <- rep(NA, nrow(results))
+
   for(game in 1:nrow(results)){
     home_ranking <- rankings[results$Home.Team[game]]
     visiting_ranking <- rankings[results$Away.Team[game]]
@@ -55,7 +60,7 @@ calculateG <- function(results, rankings, sigma, alpha){
 }
 
 
-iters <- 10000
+iters <- 1000
 
 rankings <- matrix(0, iters, length(teams))
 colnames(rankings) <- teams
@@ -69,9 +74,9 @@ for(i in 2:iters){
 	for(team in teams){
 		old_ranking <- rankings[i, team]
 		candidate_ranking <- rnorm(1, rankings[i-1, team], sqrt(candidate_sigma))
-		g_old <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i-1])
+		g_old <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i-1], team_name = team)
 		rankings[i, team ] <- candidate_ranking
-		g_cand <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i-1])
+		g_cand <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i-1], team_name = team)
 		log_acceptance_probability 	<- (g_cand - g_old)
 		acceptance_value 		<- log(runif(1))
 		if(log_acceptance_probability < acceptance_value){
@@ -80,8 +85,8 @@ for(i in 2:iters){
 	}
 	
 	alpha[i] <- rnorm(1, alpha[i-1], sqrt(candidate_sigma))
-	g_old <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i-1])
-	g_cand <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i])
+	g_old <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i-1], team_name = NULL)
+	g_cand <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i],team_name =  NULL)
 	log_acceptance_probability 	<- (g_cand - g_old)
 	acceptance_value 		<- log(runif(1))
 	if(log_acceptance_probability < acceptance_value){
