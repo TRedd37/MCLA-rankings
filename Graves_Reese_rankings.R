@@ -1,0 +1,93 @@
+
+raw_results <- read.csv("~/Dropbox/Lacrosse/MCLA scores.csv", stringsAsFactors = FALSE)
+
+results <- raw_results[, c("Home.Team", "Away.Team")]
+results$Winning.Team <- "Home"
+results$Winning.Team[raw_results$Away.Score > raw_results$Home.Score] <- "Visiting"
+
+
+
+plot(density(1/rgamma(10000, shape = 20, rate = 20)))
+
+variance <- 1/rgamma(10000, shape = 15, rate = 10)
+plot(density(variance))
+rankings <- rnorm(10000, 0, variance)
+plot(density(rankings))
+
+exp(2) / (exp(2) + exp(1.5))
+
+plot(density(rnorm(10000, 0, 1.5)))
+
+
+
+# results <- data.frame(
+# 	Home.Team = c(1, 2, 3, 1, 2, 3),
+# 	Visiting.Team = c(3, 3, 1, 2, 1, 2), 
+# 	Winning.Team = c("Home", "Visiting", "Visiting", "Home", "Visiting", "Visiting"),
+# 	stringsAsFactors = FALSE)
+
+
+################################
+
+A = 15
+B = 10
+S = 1.5
+candidate_sigma = .1
+
+teams <- unique(c(results$Home.Team, results$Away.Team))
+
+
+
+calculateG <- function(results, rankings, sigma, alpha){
+  probabilities <- rep(NA, nrow(results))
+  for(game in 1:nrow(results)){
+    home_ranking <- rankings[results$Home.Team[game]]
+    visiting_ranking <- rankings[results$Away.Team[game]]
+    denominator <- exp(home_ranking) + exp(visiting_ranking + alpha)
+    probabilities[game] <- switch(results$Winning.Team[game],
+                                  "Home" = exp(home_ranking) / denominator,
+                                  "Visiting" = exp(visiting_ranking + alpha) / denominator)
+  }
+  g <- sum(dnorm(rankings, 0, sqrt(sigma), log = TRUE)) +
+    dnorm(alpha, 0, sqrt(S), log = TRUE) +
+    sum(log(probabilities)) 
+  return(g)
+}
+
+
+iters <- 10000
+
+rankings <- matrix(0, iters, length(teams))
+colnames(rankings) <- teams
+sigma <- rep(1, iters)
+alpha <- rep(0, iters)
+
+pb <- txtProgressBar(min = 0, max = iters, style = 3)
+for(i in 2:iters){
+	setTxtProgressBar(pb, i)
+	rankings[i, ] <- rankings[i-1, ]
+	for(team in teams){
+		old_ranking <- rankings[i, team]
+		candidate_ranking <- rnorm(1, rankings[i-1, team], sqrt(candidate_sigma))
+		g_old <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i-1])
+		rankings[i, team ] <- candidate_ranking
+		g_cand <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i-1])
+		log_acceptance_probability 	<- (g_cand - g_old)
+		acceptance_value 		<- log(runif(1))
+		if(log_acceptance_probability < acceptance_value){
+			rankings[i, team ] <- old_ranking
+		}
+	}
+	
+	alpha[i] <- rnorm(1, alpha[i-1], sqrt(candidate_sigma))
+	g_old <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i-1])
+	g_cand <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i])
+	log_acceptance_probability 	<- (g_cand - g_old)
+	acceptance_value 		<- log(runif(1))
+	if(log_acceptance_probability < acceptance_value){
+		alpha[i] <- alpha[i-1]
+	}
+	sigma[i] <- 1/rgamma(1, A + (length(teams)/2) , rate = B + (sum(rankings[i, ]^2)/2))
+}
+
+save(rankings, alpha, sigma, file = "~/Dropbox/Lacrosse/first_pass.RData")
