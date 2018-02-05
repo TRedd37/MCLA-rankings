@@ -7,6 +7,15 @@ results$Winning.Team[raw_results$Away.Score > raw_results$Home.Score] <- "Visiti
 results$Neutral <- raw_results$N.CT.NT != ""
 
 
+raw_results_2018 <- read.csv("~/Personal projects/MCLA-rankings/2018 scores.csv", 
+                        stringsAsFactors = FALSE)
+
+results <- data.frame(Home.Team = raw_results_2018$Home,
+                      Away.Team = raw_results_2018$Away,
+                      Neutral = FALSE,
+                      stringsAsFactors = FALSE)
+results$Winning.Team <- "Home"
+results$Winning.Team[raw_results$Score.Away > raw_results$Score.Home] <- "Visiting"
 
 plot(density(1/rgamma(10000, shape = 20, rate = 20)))
 
