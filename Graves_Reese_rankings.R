@@ -4,6 +4,7 @@ raw_results <- read.csv("~/Dropbox/Lacrosse/Rankings/MCLA-rankings/MCLA scores.c
 results <- raw_results[, c("Home.Team", "Away.Team")]
 results$Winning.Team <- "Home"
 results$Winning.Team[raw_results$Away.Score > raw_results$Home.Score] <- "Visiting"
+results$Neutral <- raw_results$N.CT.NT != ""
 
 
 
@@ -46,12 +47,16 @@ calculateG <- function(results, rankings, sigma, alpha, team_name){
   probabilities <- rep(NA, nrow(results))
 
   for(game in 1:nrow(results)){
+    hfa <- alpha
+    if(results$Neutral[game]){
+      hfa <- 0
+    }
     home_ranking <- rankings[results$Home.Team[game]]
     visiting_ranking <- rankings[results$Away.Team[game]]
-    denominator <- exp(home_ranking) + exp(visiting_ranking + alpha)
+    denominator <- exp(home_ranking) + exp(visiting_ranking + hfa)
     probabilities[game] <- switch(results$Winning.Team[game],
                                   "Home" = exp(home_ranking) / denominator,
-                                  "Visiting" = exp(visiting_ranking + alpha) / denominator)
+                                  "Visiting" = exp(visiting_ranking + hfa) / denominator)
   }
   g <- sum(dnorm(rankings, 0, sqrt(sigma), log = TRUE)) +
     dnorm(alpha, 0, sqrt(S), log = TRUE) +
@@ -60,7 +65,7 @@ calculateG <- function(results, rankings, sigma, alpha, team_name){
 }
 
 
-iters <- 1000
+iters <- 5000
 
 rankings <- matrix(0, iters, length(teams))
 colnames(rankings) <- teams
