@@ -101,9 +101,9 @@ calculateG <- function(results, rankings, sigma, alpha, team_name){
     if(results$Neutral[game]){
       hfa <- 0
     }
-    home_ranking     <- exp(rankings[results$Home.Team[game]] + hfa)
-    visiting_ranking <- exp(rankings[results$Away.Team[game]])
-    denominator      <- exp(home_ranking) + exp(visiting_ranking)
+    home_ranking     <- exp(rankings[results$Home.Team[game]])
+    visiting_ranking <- exp(rankings[results$Away.Team[game]] + hfa)
+    denominator      <- home_ranking + visiting_ranking
     probabilities[game] <- switch(results$Winning.Team[game],
                                   "Home" = home_ranking / denominator,
                                   "Visiting" = visiting_ranking / denominator)
