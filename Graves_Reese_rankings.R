@@ -101,8 +101,8 @@ calculateG <- function(results, rankings, sigma, alpha, team_name){
     if(results$Neutral[game]){
       hfa <- 0
     }
-    home_ranking     <- exp(rankings[results$Home.Team[game]])
-    visiting_ranking <- exp(rankings[results$Away.Team[game]] + hfa)
+    home_ranking     <- exp(rankings[results$Home.Team[game]] + hfa)
+    visiting_ranking <- exp(rankings[results$Away.Team[game]])
     denominator      <- home_ranking + visiting_ranking
     probabilities[game] <- switch(results$Winning.Team[game],
                                   "Home" = home_ranking / denominator,
@@ -115,7 +115,7 @@ calculateG <- function(results, rankings, sigma, alpha, team_name){
 }
 
 
-output <- calculateRankings(results, 100)
+output <- calculateRankings(results[1:632, ], 5000)
 
 
 save(rankings, alpha, sigma, file = "~/Dropbox/Lacrosse/first_pass.RData")
