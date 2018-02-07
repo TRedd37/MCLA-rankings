@@ -15,7 +15,7 @@ results <- data.frame(Home.Team = raw_results_2018$Home,
                       Neutral = FALSE,
                       stringsAsFactors = FALSE)
 results$Winning.Team <- "Home"
-results$Winning.Team[raw_results$Score.Away > raw_results$Score.Home] <- "Visiting"
+results$Winning.Team[raw_results_2018$Score.Away > raw_results_2018$Score.Home] <- "Visiting"
 
 plot(density(1/rgamma(10000, shape = 20, rate = 20)))
 
@@ -81,7 +81,7 @@ calculateRankings <- function(results, iters = 10000){
     sigma[i] <- 1/rgamma(1, A + (length(teams)/2) , rate = B + (sum(rankings[i, ]^2)/2))
   }
   
-  output <- list(rankings = rankings,
+  output <- list(rankings = as.data.frame(rankings),
                  alpha = alpha,
                  sigma = sigma)
   return(output)
@@ -115,22 +115,24 @@ calculateG <- function(results, rankings, sigma, alpha, team_name){
 }
 
 predictGameOutcome <- function(home_team, visiting_team, output, simulations = 10000 ){
-  home_team_ratings     <- dplyr::sample_n(output$rankings[ , home_team], simulations, replace = TRUE)
-  visiting_team_ratings <- dplyr::sample_n(output$rankings[ , visiting_team], simulations, replace = TRUE)
-  hfa                   <- dplyr::sample_n(output$alpha, simulations, replace = TRUE)
+  alpha = data.frame(alpha = output$alpha)
+  home_team_ratings     <- dplyr::sample_n(output$rankings, simulations, replace = TRUE)[, home_team]
+  visiting_team_ratings <- dplyr::sample_n(output$rankings, simulations, replace = TRUE)[ , visiting_team]
+  hfa                   <- dplyr::sample_n(alpha, simulations, replace = TRUE)
   
   home_score <- exp(home_team_ratings + hfa)
   visiting_score <- exp(visiting_team_ratings)
   denominator <- home_score + visiting_score
   
   home_team_win_prob <-  home_score / denominator
-  simulated_wins <- rbinom(simulations, 1, home_team_win_prob )
+  simulated_wins <- rbinom(simulations, 1, home_team_win_prob[,1] )
   home_win_probability <- mean(simulated_wins)
   return(home_win_probability)
 }
 
+[1:632, ]
+output <- calculateRankings(results, 500)
+predictGameOutcome("Brigham Young","California", output)
 
-output <- calculateRankings(results[1:632, ], 5000)
+sort(colMeans(as.data.frame(output$rankings)), decreasing = TRUE)[1:10]
 
-
-save(rankings, alpha, sigma, file = "~/Dropbox/Lacrosse/first_pass.RData")
