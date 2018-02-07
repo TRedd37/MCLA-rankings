@@ -114,6 +114,21 @@ calculateG <- function(results, rankings, sigma, alpha, team_name){
   return(g)
 }
 
+predictGameOutcome <- function(home_team, visiting_team, output, simulations = 10000 ){
+  home_team_ratings     <- dplyr::sample_n(output$rankings[ , home_team], simulations, replace = TRUE)
+  visiting_team_ratings <- dplyr::sample_n(output$rankings[ , visiting_team], simulations, replace = TRUE)
+  hfa                   <- dplyr::sample_n(output$alpha, simulations, replace = TRUE)
+  
+  home_score <- exp(home_team_ratings + hfa)
+  visiting_score <- exp(visiting_team_ratings)
+  denominator <- home_score + visiting_score
+  
+  home_team_win_prob <-  home_score / denominator
+  simulated_wins <- rbinom(simulations, 1, home_team_win_prob )
+  home_win_probability <- mean(simulated_wins)
+  return(home_win_probability)
+}
+
 
 output <- calculateRankings(results[1:632, ], 5000)
 
