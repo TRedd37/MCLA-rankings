@@ -17,16 +17,16 @@ results <- data.frame(Home.Team = raw_results_2018$Home,
 results$Winning.Team <- "Home"
 results$Winning.Team[raw_results_2018$Score.Away > raw_results_2018$Score.Home] <- "Visiting"
 
-plot(density(1/rgamma(10000, shape = 20, rate = 20)))
 
-variance <- 1/rgamma(10000, shape = 15, rate = 10)
-plot(density(variance))
-rankings <- rnorm(10000, 0, variance)
-plot(density(rankings))
+raw_results_2018 <- read.csv("~/Personal projects/MCLA-rankings/2018 scores 2018_02_13.csv", 
+                             stringsAsFactors = FALSE)
 
-exp(2) / (exp(2) + exp(1.5))
-
-plot(density(rnorm(10000, 0, 1.5)))
+results <- data.frame(Home.Team = raw_results_2018$Home,
+                      Away.Team = raw_results_2018$Away,
+                      Neutral = FALSE,
+                      stringsAsFactors = FALSE)
+results$Winning.Team <- "Home"
+results$Winning.Team[raw_results_2018$Away.Score > raw_results_2018$Home.Score] <- "Visiting"
 
 
 
@@ -60,9 +60,11 @@ calculateRankings <- function(results, iters = 10000){
     for(team in teams){
       old_ranking <- rankings[i, team]
       candidate_ranking <- rnorm(1, rankings[i-1, team], sqrt(candidate_sigma))
-      g_old <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i-1], team_name = team)
+      g_old <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i-1], 
+                          team_name = team, S = S)
       rankings[i, team ] <- candidate_ranking
-      g_cand <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i-1], team_name = team)
+      g_cand <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i-1], 
+                           team_name = team, S = S)
       log_acceptance_probability 	<- (g_cand - g_old)
       acceptance_value 		<- log(runif(1))
       if(log_acceptance_probability < acceptance_value){
@@ -71,8 +73,10 @@ calculateRankings <- function(results, iters = 10000){
     }
     
     alpha[i] <- rnorm(1, alpha[i-1], sqrt(candidate_sigma))
-    g_old <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i-1], team_name = NULL)
-    g_cand <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i],team_name =  NULL)
+    g_old <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i-1], 
+                        team_name = NULL, S = S)
+    g_cand <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i], 
+                         team_name =  NULL, S = S)
     log_acceptance_probability 	<- (g_cand - g_old)
     acceptance_value 		<- log(runif(1))
     if(log_acceptance_probability < acceptance_value){
@@ -89,7 +93,7 @@ calculateRankings <- function(results, iters = 10000){
 
 
 
-calculateG <- function(results, rankings, sigma, alpha, team_name){
+calculateG <- function(results, rankings, sigma, alpha, team_name, S){
   if(!is.null(team_name)){
     results <- results[results$Home.Team == team_name | results$Away.Team == team_name, ]
   }
@@ -130,9 +134,18 @@ predictGameOutcome <- function(home_team, visiting_team, output, simulations = 1
   return(home_win_probability)
 }
 
-[1:632, ]
-output <- calculateRankings(results, 500)
-predictGameOutcome("Brigham Young","California", output)
+extractRankings <- function(model_output, burn_in_rate = 0.1){
+  ranking_matrix <- model_output$rankings
+  simulations <- nrow(ranking_matrix)
+  start_position <- floor(burn_in_rate * simulations)
+  rankings <- sort(colMeans(ranking_matrix[start_position:simulations, ]), decreasing = TRUE)
+  return(rankings)
+}
 
-sort(colMeans(as.data.frame(output$rankings)), decreasing = TRUE)[1:10]
+output <- calculateRankings(results, 1000)
+predictGameOutcome( "California","Brigham Young", output)
+extractRankings(output)[c("California", "Brigham Young", "UNLV", "Boise State")]
+
+
+sort(colMeans(as.data.frame(output$rankings[(nrow(output$rankings) / 10):  ])), decreasing = TRUE)[1:10]
 
