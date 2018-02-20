@@ -45,13 +45,13 @@ head(mcla2018todate)
 
 results <- getFinishedResults(mcla2018todate)
 
+subset(results, Home.Team == "Boise State"|Away.Team == "Boise State")
 
 output <- calculateRankings(results, 10000)
 predictGameOutcome( "California","Brigham Young", output)
-extractRankings(output)[c("California", "Brigham Young", "UNLV", "Boise State")]
+extractRankings(output)
+
+extractRankings(output)[c("California", "Brigham Young", "UNLV", "Boise State", "Utah")]
 
 
-
-
-sort(colMeans(as.data.frame(output$rankings[(nrow(output$rankings) / 10):  ])), decreasing = TRUE)[1:10]
 
