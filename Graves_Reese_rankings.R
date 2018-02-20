@@ -1,44 +1,4 @@
 
-raw_results <- read.csv("~/Personal projects/MCLA-rankings/MCLA scores.csv", stringsAsFactors = FALSE)
-
-results <- raw_results[, c("Home.Team", "Away.Team")]
-results$Winning.Team <- "Home"
-results$Winning.Team[raw_results$Away.Score > raw_results$Home.Score] <- "Visiting"
-results$Neutral <- raw_results$N.CT.NT != ""
-
-
-raw_results_2018 <- read.csv("~/Personal projects/MCLA-rankings/2018 scores.csv", 
-                        stringsAsFactors = FALSE)
-
-results <- data.frame(Home.Team = raw_results_2018$Home,
-                      Away.Team = raw_results_2018$Away,
-                      Neutral = FALSE,
-                      stringsAsFactors = FALSE)
-results$Winning.Team <- "Home"
-results$Winning.Team[raw_results_2018$Score.Away > raw_results_2018$Score.Home] <- "Visiting"
-
-
-raw_results_2018 <- read.csv("~/Personal projects/MCLA-rankings/2018 scores 2018_02_13.csv", 
-                             stringsAsFactors = FALSE)
-
-results <- data.frame(Home.Team = raw_results_2018$Home,
-                      Away.Team = raw_results_2018$Away,
-                      Neutral = FALSE,
-                      stringsAsFactors = FALSE)
-results$Winning.Team <- "Home"
-results$Winning.Team[raw_results_2018$Away.Score > raw_results_2018$Home.Score] <- "Visiting"
-
-
-
-# results <- data.frame(
-# 	Home.Team = c(1, 2, 3, 1, 2, 3),
-# 	Visiting.Team = c(3, 3, 1, 2, 1, 2), 
-# 	Winning.Team = c("Home", "Visiting", "Visiting", "Home", "Visiting", "Visiting"),
-# 	stringsAsFactors = FALSE)
-
-
-################################
-
 calculateRankings <- function(results, iters = 10000){
   A = 15
   B = 10
@@ -97,9 +57,9 @@ calculateG <- function(results, rankings, sigma, alpha, team_name, S){
   if(!is.null(team_name)){
     results <- results[results$Home.Team == team_name | results$Away.Team == team_name, ]
   }
-    
+  
   probabilities <- rep(NA, nrow(results))
-
+  
   for(game in 1:nrow(results)){
     hfa <- alpha
     if(results$Neutral[game]){
@@ -142,10 +102,15 @@ extractRankings <- function(model_output, burn_in_rate = 0.1){
   return(rankings)
 }
 
-output <- calculateRankings(results, 1000)
-predictGameOutcome( "California","Brigham Young", output)
-extractRankings(output)[c("California", "Brigham Young", "UNLV", "Boise State")]
-
-
-sort(colMeans(as.data.frame(output$rankings[(nrow(output$rankings) / 10):  ])), decreasing = TRUE)[1:10]
+getFinishedResults <- function(df){
+  finished_games <- subset(df, !is.na(HomeGoals))
+  
+  results <- data.frame(Home.Team = finished_games$Home,
+                        Away.Team = finished_games$Away,
+                        Neutral = finished_games$GameType == "Neutral",
+                        stringsAsFactors = FALSE)
+  results$Winning.Team <- "Home"
+  results$Winning.Team[finished_games$AwayGoals > finished_games$HomeGoals] <- "Visiting"
+  return(results)
+}
 
