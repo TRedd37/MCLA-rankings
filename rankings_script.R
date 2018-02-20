@@ -39,9 +39,18 @@ results$Winning.Team[raw_results_2018$Away.Score > raw_results_2018$Home.Score] 
 
 ################################
 
-output <- calculateRankings(results, 1000)
+source("http://grimshawville.byu.edu/makedataMCLA2018.R")
+
+head(mcla2018todate)
+
+results <- getFinishedResults(mcla2018todate)
+
+
+output <- calculateRankings(results, 10000)
 predictGameOutcome( "California","Brigham Young", output)
 extractRankings(output)[c("California", "Brigham Young", "UNLV", "Boise State")]
+
+
 
 
 sort(colMeans(as.data.frame(output$rankings[(nrow(output$rankings) / 10):  ])), decreasing = TRUE)[1:10]
