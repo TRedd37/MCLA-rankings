@@ -19,12 +19,9 @@ ui <- fluidPage(
 )
 
 server <- function(input, output) {
-
   output$rankings   <- renderDataTable({rankings})
   output$games      <- renderDataTable({results})
-  output$prediction <- renderText(predictGameOutcome(input$homeTeam, 
-                                                      input$awayTeam, 
-                                                      model_output))
+  output$prediction <- renderText({scales::percent(.555)})
 }
 
 # Run the app ----

@@ -12,9 +12,7 @@ library(dplyr)
 
 # http://mcla.us/schedule/20187?page=1
 
-full_schedule<-NULL
 
-full_schedule <- ldply(1:22, getSchedulePage)
 
 getSchedulePage <- function(i){
   schedule_url  <- paste0("http://mcla.us/schedule/2018?page=", i)
@@ -27,8 +25,7 @@ getSchedulePage <- function(i){
   return(schedule)
 }
 
-# filter games not yet played
-#full_schedule<-subset(full_schedule,Score!="N/A")
+full_schedule <- ldply(1:22, getSchedulePage)
 
 # parse score
 
