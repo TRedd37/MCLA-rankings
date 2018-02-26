@@ -195,16 +195,18 @@ readVenueTable <- function(i){
 
 full_schedule$GameType<-"Home"
 for(i in 1:nrow(full_schedule)){
-  thispage <- tryCatch(readVenueTable(i), error = function(e) print(i))
-  
-  if(is.numeric(thispage)){
+  thispage <- tryCatch(readVenueTable(i), 
+                       error = function(e) print(i) )
+  if(is.numeric(thispage) || nrow(thispage) < 5 ){
+    print(full_schedule$Venue[i])
     fields_home_team <- "unknown"
   } else {
     fields_home_team <- names(which.max(table(thispage$Home)))
   }
   
-  if(full_schedule$Home[i] != fields_home_team
-     | nrow(thispage) < 5 ){full_schedule$GameType[i] <- "Neutral"}
+  if(full_schedule$Home[i] != fields_home_team  ){
+    full_schedule$GameType[i] <- "Neutral"
+  }
 }
 
 
@@ -217,7 +219,7 @@ full_schedule$GameType[full_schedule$Home=="Texas Christian"
                    & full_schedule$Venue=="TCU Intramural Field"]<-"Home"
 full_schedule$GameType[full_schedule$Home=="Southeastern Louisiana"
                    & full_schedule$Venue=="Southeastern Soccer Complex (SELU)"]<-"Home"
-full_schedule$GameType[full_schedule$Venue=="North Park Field"]<-"Neutral"
+full_schedule$GameType[full_schedule$Venue=="North Park Field"] <- "Neutral"
 full_schedule$GameType[full_schedule$Home=="Southern Illinois"
                    & full_schedule$Venue=="SIU Carbondale"]<-"Home"
 full_schedule$GameType[full_schedule$Home=="Keiser University"
