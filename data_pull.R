@@ -17,11 +17,8 @@ full_schedule<-NULL
 full_schedule <- ldply(1:22, getSchedulePage)
 
 getSchedulePage <- function(i){
-  # create the webpage url using paste
-  schedule_url <- paste0("http://mcla.us/schedule/2018?page=", i)
-  # read webpage and store in memory
+  schedule_url  <- paste0("http://mcla.us/schedule/2018?page=", i)
   schedule_html <- htmlParse(schedule_url)
-  # create R dataset from webpage contents
   schedule <-readHTMLTable(schedule_html, header=TRUE, which=1, stringsAsFactors=FALSE)
   # is this a page of results or future games
   if(!"Score" %in% names(schedule)){
@@ -237,4 +234,4 @@ full_schedule$GameType[full_schedule$Home=="West Virginia"
 full_schedule$GameType[full_schedule$Venue=="South Barrington Park District"]<-"Neutral"
 
 
-mcla2018todate<-full_schedule
+mcla2018todate <- cbind(full_schedule, scores)
