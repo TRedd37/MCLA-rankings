@@ -183,21 +183,28 @@ full_schedule$VenueWeb[full_schedule$Venue=="Ames - Field 1"]<-"ames_field_1"
 full_schedule$VenueWeb[full_schedule$Venue=="Salt Lake City RAC"]<-"salt-lake-city-rac"
 full_schedule$VenueWeb[full_schedule$Venue=="Foothill High School"]<-"foothill-high-school"
 full_schedule$VenueWeb[full_schedule$Venue=="Robb Athletic Field"]<-"robb-athletic-field"
-full_schedule
+full_schedule$VenueWeb[full_schedule$Venue=="Lorene Rogers MIddle School"]<-"lorene-rogers-middle-school"
 
+
+readVenueTable <- function(i){
+  venue_URL <- paste0("http://mcla.us/venue/", full_schedule$VenueWeb[i])
+  venue_webpage <-htmlParse(venue_URL)
+  table <- readHTMLTable(venue_webpage, header=TRUE, which=1, stringsAsFactors=FALSE)
+  return(table)
+}
 
 full_schedule$GameType<-"Home"
-for(i in 1:length(full_schedule$Venue)){
-  print(i)
-  # create the webpage url using paste
-  thispage.url<-paste("http://mcla.us/venue/",full_schedule$VenueWeb[i],sep="")
-  # read webpage and store in memory
-  thispage.webpage<-htmlParse(thispage.url)
-  # create R dataset from webpage contents
-  thispage<-readHTMLTable(thispage.webpage,
-                          header=TRUE,which=1,stringsAsFactors=FALSE)
-  if(full_schedule$Home[i]!=names(which.max(table(thispage$Home)))
-     | dim(thispage)[1]<5 ){full_schedule$GameType[i]<-"Neutral"}
+for(i in 1:nrow(full_schedule)){
+  thispage <- tryCatch(readVenueTable(i), error = function(e) print(i))
+  
+  if(is.numeric(thispage)){
+    fields_home_team <- "unknown"
+  } else {
+    fields_home_team <- names(which.max(table(thispage$Home)))
+  }
+  
+  if(full_schedule$Home[i] != fields_home_team
+     | nrow(thispage) < 5 ){full_schedule$GameType[i] <- "Neutral"}
 }
 
 
