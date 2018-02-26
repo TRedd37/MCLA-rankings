@@ -4,37 +4,48 @@
 # webscraper
 
 library(XML)
+library(plyr)
+library(stringr)
+library(dplyr)
 
 # Games and Results
 
 # http://mcla.us/schedule/20187?page=1
 
-all.pages<-NULL
-for(i in 1:22){
-  print(i)
+full_schedule<-NULL
+
+full_schedule <- ldply(1:22, getSchedulePage)
+
+getSchedulePage <- function(i){
   # create the webpage url using paste
-  thispage.url<-paste("http://mcla.us/schedule/2018?page=",i,sep="")
+  schedule_url <- paste0("http://mcla.us/schedule/2018?page=", i)
   # read webpage and store in memory
-  thispage.webpage<-htmlParse(thispage.url)
+  schedule_html <- htmlParse(schedule_url)
   # create R dataset from webpage contents
-  thispage<-readHTMLTable(thispage.webpage,
-                          header=TRUE,which=1,stringsAsFactors=FALSE)
+  schedule <-readHTMLTable(schedule_html, header=TRUE, which=1, stringsAsFactors=FALSE)
   # is this a page of results or future games
-  if(dim(thispage)[2]==6){
-    thispage$Score<-"N/A"
+  if(!"Score" %in% names(schedule)){
+    schedule$Score<-"N/A"
   }
-  # combine this page's data to the all.pages dataframe
-  all.pages<-rbind(all.pages,thispage)
+  return(schedule)
 }
 
 # filter games not yet played
-#all.pages<-subset(all.pages,Score!="N/A")
+#full_schedule<-subset(full_schedule,Score!="N/A")
 
 # parse score
-temp.scores<-as.numeric(unlist(strsplit(all.pages$Score,"-")))
-all.pages$AwayGoals<-temp.scores[seq(1,2*length(all.pages$Score),by=2)]
-all.pages$HomeGoals<-temp.scores[seq(2,2*length(all.pages$Score),by=2)]
 
+parseScores <- function(unparsed_scores){
+  scores <- str_split(unparsed_scores, "-", simplify = TRUE)
+  scores[scores == "N/A"] <- 0
+  scores[scores == ""] <- 0
+  scores <- as.data.frame(scores, stringsAsFactors = FALSE)
+  names(scores) <- c("AwayGoals", "HomeGoals")
+  output <- scores %>% mutate_all(as.numeric)
+  return(output)
+}
+
+scores <- parseScores(full_schedule$Score)
 
 
 # identify home field or neutral location
@@ -42,182 +53,185 @@ all.pages$HomeGoals<-temp.scores[seq(2,2*length(all.pages$Score),by=2)]
 #http://mcla.us/venue/montana_state
 
 # correct some names to their venue webpage name
-all.pages$VenueWeb<-gsub(' ','_',all.pages$Venue)
-all.pages$VenueWeb[all.pages$Venue=="Smithson Valley High School"]<-"smithson_high_school"
-all.pages$VenueWeb[all.pages$Venue=="University of Texas - Dallas"]<-"university_of_texasdallas"
-all.pages$VenueWeb[all.pages$Venue=="Instituto Politecnico Nacional"]<-"instituto-politecnico-nacional"
-all.pages$VenueWeb[all.pages$Venue=="UC-Santa Barbara"]<-"ucsanta_barbara"
-all.pages$VenueWeb[all.pages$Venue=="Joe Aillet Stadium"]<-"Aillet"
-all.pages$VenueWeb[all.pages$Venue=="Veterans Park"]<-"veterans-park"
-all.pages$VenueWeb[all.pages$Venue=="Florida Atlantic University"]<-"florida_atlantic"
-all.pages$VenueWeb[all.pages$Venue=="University of Arkansas"]<-"rec_services_grass_field_fayetteville"
-all.pages$VenueWeb[all.pages$Venue=="Allison North Stadium"]<-"allison-north-stadium"
-all.pages$VenueWeb[all.pages$Venue=="E. Washington Field Complex"]<-"e-washington-field-complex"
-all.pages$VenueWeb[all.pages$Venue=="UNC-Charlotte"]<-"unccharlotte"
-all.pages$VenueWeb[all.pages$Venue=="University of California - Berkeley"]<-"university_of_california_berkeley"
-all.pages$VenueWeb[all.pages$Venue=="Prestonwood Christian Academy"]<-"prestonwood-christian-academy"
-all.pages$VenueWeb[all.pages$Venue=="Virginia Tech - The Marching Virginians Center"]<-"the-marching-virginians-center"
-all.pages$VenueWeb[all.pages$Venue=="Cusabo Nation Lacrosse Complex"]<-"cusabo-nation-lacrosse-complex"
-all.pages$VenueWeb[all.pages$Venue=="Vanderbilt - Natchez Trace Field"]<-"natchez-field"
-all.pages$VenueWeb[all.pages$Venue=="Wake Forest - Water Tower Field"]<-"water-tower-field"
-all.pages$VenueWeb[all.pages$Venue=="Auburn Intramural Fields"]<-"auburn-intramural-fields"
-all.pages$VenueWeb[all.pages$Venue=="Johnny Downs Sports Complex"]<-"johnny-downs-sports-complex"
-all.pages$VenueWeb[all.pages$Venue=="South Carolina-Bluff Road Practice Fields"]<-"bluff-road-practice-fields"
-all.pages$VenueWeb[all.pages$Venue=="T L Hanna High School"]<-"t-l-hanna-high-school"
-all.pages$VenueWeb[all.pages$Venue=="Emory - Candler Park"]<-"candler"
-all.pages$VenueWeb[all.pages$Venue=="University of Portland"]<-"portland"
-all.pages$VenueWeb[all.pages$Venue=="UC-Irvine Field 2"]<-"ucirvine_field2"
-all.pages$VenueWeb[all.pages$Venue=="Joint Venture Park"]<-"joint-venture-park"
-all.pages$VenueWeb[all.pages$Venue=="Cal State-Long Beach"]<-"cal_statelong_beach"
-all.pages$VenueWeb[all.pages$Venue=="Hidden Creek Polo Fields"]<-"hidden-creek-polo-fields"
-all.pages$VenueWeb[all.pages$Venue=="Aurora Sports Park"]<-"aurora-sports-park"
-all.pages$VenueWeb[all.pages$Venue=="Tennessee-Sutherland Fields"]<-"sutherland_fields"
-all.pages$VenueWeb[all.pages$Venue=="Mulligan Field (Gonzaga)"]<-"mulligan_field_gonzaga"
-all.pages$VenueWeb[all.pages$Venue=="Camas High School"]<-"camas-high-school"
-all.pages$VenueWeb[all.pages$Venue=="Eastern Carver County Athletic Center"]<-"eastern-carver-county-athletic-center"
-all.pages$VenueWeb[all.pages$Venue=="Concordia University"]<-"concordia_university_ca"
-all.pages$VenueWeb[all.pages$Venue=="Texas A & M"]<-"texas_a__m"
-all.pages$VenueWeb[all.pages$Venue=="North Florida"]<-"north-florida"
-all.pages$VenueWeb[all.pages$Venue=="University of Washington IMA #1"]<-"university_of_washington_ima_1"
-all.pages$VenueWeb[all.pages$Venue=="Judge Memorial High School"]<-"judge_memorial_catholic"
-all.pages$VenueWeb[all.pages$Venue=="TCU Sports Club Field"]<-"tcu-sports-club-field"
-all.pages$VenueWeb[all.pages$Venue=="CEFCU Stadium (SJSU)"]<-"CEFCU%20Stadium"
-all.pages$VenueWeb[all.pages$Venue=="St Mary's College"]<-"st_marys"
-all.pages$VenueWeb[all.pages$Venue=="Washington University - St. Louis"]<-"washington_university"
-all.pages$VenueWeb[all.pages$Venue=="Georgia Tech Roe Stamps Field"]<-"ga_tech_roe_stamps_field"
-all.pages$VenueWeb[all.pages$Venue=="Colorado State University-Pueblo"]<-"colorado_state_universitypueblo"
-all.pages$VenueWeb[all.pages$Venue=="TCU Intramural Field"]<-"tcu-intramural-field"
-all.pages$VenueWeb[all.pages$Venue=="St. Edwards"]<-"st_edwards"
-all.pages$VenueWeb[all.pages$Venue=="University of Tennessee"]<-"university_tennessee"
-all.pages$VenueWeb[all.pages$Venue=="Tarleton State University"]<-"tarleton_state"
-all.pages$VenueWeb[all.pages$Venue=="Ford Center"]<-"ford-center"
-all.pages$VenueWeb[all.pages$Venue=="Southeastern Soccer Complex (SELU)"]<-"southeastern-soccer-complex"
-all.pages$VenueWeb[all.pages$Venue=="Dacotah Field"]<-"north_dakota_state_university"
-all.pages$VenueWeb[all.pages$Venue=="NC State - Method Road Soccer Field"]<-"method_road_soccer_field"
-all.pages$VenueWeb[all.pages$Venue=="University of Texas - San Antonio"]<-"university_of_texassan_antonio"
-all.pages$VenueWeb[all.pages$Venue=="University of Colorado-Denver"]<-"colorado_denver"
-all.pages$VenueWeb[all.pages$Venue=="University of Puget Sound"]<-"puget_sound"
-all.pages$VenueWeb[all.pages$Venue=="Clark Field"]<-"clark-field"
-all.pages$VenueWeb[all.pages$Venue=="North Park Field"]<-"north_park_fields"
-all.pages$VenueWeb[all.pages$Venue=="UC-Irvine"]<-"ucirvine"
-all.pages$VenueWeb[all.pages$Venue=="Washington University - South Campus"]<-"washington_university_south"
-all.pages$VenueWeb[all.pages$Venue=="SIU Carbondale"]<-"siu-carbondale"
-all.pages$VenueWeb[all.pages$Venue=="Keiser University"]<-"keiser-university"
-all.pages$VenueWeb[all.pages$Venue=="Oregon - Nex-Turf Field"]<-"oregon_nex_turf_field"
-all.pages$VenueWeb[all.pages$Venue=="Gagliardi Dome (SJU)"]<-"gaglirdi-dome-sju-"
-all.pages$VenueWeb[all.pages$Venue=="Terry Fox Field"]<-"terry-fox-field"
-all.pages$VenueWeb[all.pages$Venue=="Park Tudor School"]<-"park-tudor"
-all.pages$VenueWeb[all.pages$Venue=="Texas A&M Galveston"]<-"texas_a_m_galveston"
-all.pages$VenueWeb[all.pages$Venue=="NAU South Field Recreation Complex"]<-"nau_south_intramural_fields"
-all.pages$VenueWeb[all.pages$Venue=="Stonehill College - WB Mason Stadium"]<-"stonehill_college_wb_mason_stadium"
-all.pages$VenueWeb[all.pages$Venue=="University of Minnesota (bubble)"]<-"minnesota_bubble"
-all.pages$VenueWeb[all.pages$Venue=="University Stadium - Chico"]<-"chico"
-all.pages$VenueWeb[all.pages$Venue=="University of Missouri S&T"]<-"university_of_missouri_st"
-all.pages$VenueWeb[all.pages$Venue=="Stephen F. Austin State University"]<-"stephen_f_austin_state_university"
-all.pages$VenueWeb[all.pages$Venue=="Momentum Rec Field"]<-"momentum-rec-field"
-all.pages$VenueWeb[all.pages$Venue=="University of California - Santa Cruz"]<-"university_of_california_santa_cruz"
-all.pages$VenueWeb[all.pages$Venue=="Intramural Club Sports Field (Monmouth, OR)"]<-"intramural_club_sports_field"
-all.pages$VenueWeb[all.pages$Venue=="Wade King Athletic Center"]<-"wade_king"
-all.pages$VenueWeb[all.pages$Venue=="Skyline High School"]<-"skyline-high-school"
-all.pages$VenueWeb[all.pages$Venue=="Sozo Sports Complex"]<-"sozo-sports-complex"
-all.pages$VenueWeb[all.pages$Venue=="SUNY-Purchase"]<-"suny_purchase"
-all.pages$VenueWeb[all.pages$Venue=="University of Colorado (Colorado Springs)"]<-"university_of_colorado_colorado_springs"
-all.pages$VenueWeb[all.pages$Venue=="Swensen Field"]<-"bridgewater_state_university"
-all.pages$VenueWeb[all.pages$Venue=="Strawberry Stadium"]<-"strawberry-stadium"
-all.pages$VenueWeb[all.pages$Venue=="Chapman Stadium"]<-"chapman"
-all.pages$VenueWeb[all.pages$Venue=="Arizona State University - West Campus"]<-"asu_west"
-all.pages$VenueWeb[all.pages$Venue=="Cromwell Field"]<-"usc"
-all.pages$VenueWeb[all.pages$Venue=="Segerstrom High School"]<-"segerstrom-high-school"
-all.pages$VenueWeb[all.pages$Venue=="Johnson Hagood Stadium"]<-"johnson_hagood"
-all.pages$VenueWeb[all.pages$Venue=="Argo Field"]<-"argo-field"
-all.pages$VenueWeb[all.pages$Venue=="Liberty Men's Lacrosse Field"]<-"liberty_mens_lacrosse_field"
-all.pages$VenueWeb[all.pages$Venue=="Oaks Christian High School"]<-"oaks-christian-high-school"
-all.pages$VenueWeb[all.pages$Venue=="Spence Eccles Ogden Community Sports Complex"]<-"spence-eccles-ogden-community-sports-complex"
-all.pages$VenueWeb[all.pages$Venue=="Central Florida - RWC Park"]<-"rwc-park-"
-all.pages$VenueWeb[all.pages$Venue=="Vanderbilt - Rec Field 2"]<-"vanderbilt-rec-field-2"
-all.pages$VenueWeb[all.pages$Venue=="Alabama Intramural Fields FIeld #1"]<-"alabama_intramural_fields"
-all.pages$VenueWeb[all.pages$Venue=="University of Utah"]<-"u_utah"
-all.pages$VenueWeb[all.pages$Venue=="UC-San Diego"]<-"ucsan_diego"
-all.pages$VenueWeb[all.pages$Venue=="Oconee County High School"]<-"oconee-county-high-school"
-all.pages$VenueWeb[all.pages$Venue=="USU Legacy Fields"]<-"usu_legacy"
-all.pages$VenueWeb[all.pages$Venue=="Moakley Park"]<-"moakley-park"
-all.pages$VenueWeb[all.pages$Venue=="Dick's Sporting Goods Park Field 8"]<-"dicks_sporting_goods_park_field_8"
-all.pages$VenueWeb[all.pages$Venue=="University of Nevada - Reno"]<-"university_of_nevada__reno"
-all.pages$VenueWeb[all.pages$Venue=="LSU Urec Fields"]<-"lsa_urec_fields"
-all.pages$VenueWeb[all.pages$Venue=="Brigham Young University - North Field"]<-"brigham_young_university_north_field"
-all.pages$VenueWeb[all.pages$Venue=="Regis Jesuit High School"]<-"regis-jesuit-high-school"
-all.pages$VenueWeb[all.pages$Venue=="Colorado State University-Ft. Collins"]<-"colorado_state_universityft_collins"
-all.pages$VenueWeb[all.pages$Venue=="University of Notre Dame"]<-"notre_dame"
-all.pages$VenueWeb[all.pages$Venue=="Greenbrier East High School"]<-"greenbrier-east-high-school"
-all.pages$VenueWeb[all.pages$Venue=="DE Turf Complex"]<-"de-turf-complex"
-all.pages$VenueWeb[all.pages$Venue=="Indiana University - Evan Williams (Grass)"]<-"indiana-university-evan-williams--grass-"
-all.pages$VenueWeb[all.pages$Venue=="Pacific Grove High School"]<-"pacific-grove-high-school"
-all.pages$VenueWeb[all.pages$Venue=="University of Dallas"]<-"university_dallas"
-all.pages$VenueWeb[all.pages$Venue=="Indiana University - Rec Sports Complex (Turf)"]<-"indiana-university-rec-sports-complex--turf-"
-all.pages$VenueWeb[all.pages$Venue=="John Coughlin Memorial Field"]<-"coughlin"
-all.pages$VenueWeb[all.pages$Venue=="Maple Grove Sports Dome"]<-"maple-grove-sports-dome"
-all.pages$VenueWeb[all.pages$Venue=="Eastern Florida State College"]<-"eastern-florida-state-college"
-all.pages$VenueWeb[all.pages$Venue=="Georgia Club Sports Complex"]<-"georgia_rec_complex"
-all.pages$VenueWeb[all.pages$Venue=="University of Buffalo"]<-"buffalo"
-all.pages$VenueWeb[all.pages$Venue=="Sierra Nevada College"]<-"sierra_nevada"
-all.pages$VenueWeb[all.pages$Venue=="Duck Samford (Auburn)"]<-"duck-samford-auburn-"
-all.pages$VenueWeb[all.pages$Venue=="O'Shaughnessy Stadium"]<-"oshaughnessy_stadium"
-all.pages$VenueWeb[all.pages$Venue=="West Virginia - University HS"]<-"west-virginia-university-hs"
-all.pages$VenueWeb[all.pages$Venue=="South Barrington Park District"]<-"south_barrington_park"
-all.pages$VenueWeb[all.pages$Venue=="George Pierce Park"]<-"george-pierce-park"
-all.pages$VenueWeb[all.pages$Venue=="TCF Bank Stadium"]<-"tcf_stadium"
-all.pages$VenueWeb[all.pages$Venue=="Ames - Field 1"]<-"ames_field_1"
-all.pages$VenueWeb[all.pages$Venue=="Salt Lake City RAC"]<-"salt-lake-city-rac"
-all.pages$VenueWeb[all.pages$Venue=="Foothill High School"]<-"foothill-high-school"
-all.pages$VenueWeb[all.pages$Venue=="Robb Athletic Field"]<-"robb-athletic-field"
+full_schedule$VenueWeb<-gsub(' ', '_', full_schedule$Venue)
 
 
-all.pages$GameType<-"Home"
-for(i in 671:length(all.pages$Venue)){
+full_schedule$VenueWeb[full_schedule$Venue=="Smithson Valley High School"]<-"smithson_high_school"
+full_schedule$VenueWeb[full_schedule$Venue=="University of Texas - Dallas"]<-"university_of_texasdallas"
+full_schedule$VenueWeb[full_schedule$Venue=="Instituto Politecnico Nacional"]<-"instituto-politecnico-nacional"
+full_schedule$VenueWeb[full_schedule$Venue=="UC-Santa Barbara"]<-"ucsanta_barbara"
+full_schedule$VenueWeb[full_schedule$Venue=="Joe Aillet Stadium"]<-"Aillet"
+full_schedule$VenueWeb[full_schedule$Venue=="Veterans Park"]<-"veterans-park"
+full_schedule$VenueWeb[full_schedule$Venue=="Florida Atlantic University"]<-"florida_atlantic"
+full_schedule$VenueWeb[full_schedule$Venue=="University of Arkansas"]<-"rec_services_grass_field_fayetteville"
+full_schedule$VenueWeb[full_schedule$Venue=="Allison North Stadium"]<-"allison-north-stadium"
+full_schedule$VenueWeb[full_schedule$Venue=="E. Washington Field Complex"]<-"e-washington-field-complex"
+full_schedule$VenueWeb[full_schedule$Venue=="UNC-Charlotte"]<-"unccharlotte"
+full_schedule$VenueWeb[full_schedule$Venue=="University of California - Berkeley"]<-"university_of_california_berkeley"
+full_schedule$VenueWeb[full_schedule$Venue=="Prestonwood Christian Academy"]<-"prestonwood-christian-academy"
+full_schedule$VenueWeb[full_schedule$Venue=="Virginia Tech - The Marching Virginians Center"]<-"the-marching-virginians-center"
+full_schedule$VenueWeb[full_schedule$Venue=="Cusabo Nation Lacrosse Complex"]<-"cusabo-nation-lacrosse-complex"
+full_schedule$VenueWeb[full_schedule$Venue=="Vanderbilt - Natchez Trace Field"]<-"natchez-field"
+full_schedule$VenueWeb[full_schedule$Venue=="Wake Forest - Water Tower Field"]<-"water-tower-field"
+full_schedule$VenueWeb[full_schedule$Venue=="Auburn Intramural Fields"]<-"auburn-intramural-fields"
+full_schedule$VenueWeb[full_schedule$Venue=="Johnny Downs Sports Complex"]<-"johnny-downs-sports-complex"
+full_schedule$VenueWeb[full_schedule$Venue=="South Carolina-Bluff Road Practice Fields"]<-"bluff-road-practice-fields"
+full_schedule$VenueWeb[full_schedule$Venue=="T L Hanna High School"]<-"t-l-hanna-high-school"
+full_schedule$VenueWeb[full_schedule$Venue=="Emory - Candler Park"]<-"candler"
+full_schedule$VenueWeb[full_schedule$Venue=="University of Portland"]<-"portland"
+full_schedule$VenueWeb[full_schedule$Venue=="UC-Irvine Field 2"]<-"ucirvine_field2"
+full_schedule$VenueWeb[full_schedule$Venue=="Joint Venture Park"]<-"joint-venture-park"
+full_schedule$VenueWeb[full_schedule$Venue=="Cal State-Long Beach"]<-"cal_statelong_beach"
+full_schedule$VenueWeb[full_schedule$Venue=="Hidden Creek Polo Fields"]<-"hidden-creek-polo-fields"
+full_schedule$VenueWeb[full_schedule$Venue=="Aurora Sports Park"]<-"aurora-sports-park"
+full_schedule$VenueWeb[full_schedule$Venue=="Tennessee-Sutherland Fields"]<-"sutherland_fields"
+full_schedule$VenueWeb[full_schedule$Venue=="Mulligan Field (Gonzaga)"]<-"mulligan_field_gonzaga"
+full_schedule$VenueWeb[full_schedule$Venue=="Camas High School"]<-"camas-high-school"
+full_schedule$VenueWeb[full_schedule$Venue=="Eastern Carver County Athletic Center"]<-"eastern-carver-county-athletic-center"
+full_schedule$VenueWeb[full_schedule$Venue=="Concordia University"]<-"concordia_university_ca"
+full_schedule$VenueWeb[full_schedule$Venue=="Texas A & M"]<-"texas_a__m"
+full_schedule$VenueWeb[full_schedule$Venue=="North Florida"]<-"north-florida"
+full_schedule$VenueWeb[full_schedule$Venue=="University of Washington IMA #1"]<-"university_of_washington_ima_1"
+full_schedule$VenueWeb[full_schedule$Venue=="Judge Memorial High School"]<-"judge_memorial_catholic"
+full_schedule$VenueWeb[full_schedule$Venue=="TCU Sports Club Field"]<-"tcu-sports-club-field"
+full_schedule$VenueWeb[full_schedule$Venue=="CEFCU Stadium (SJSU)"]<-"CEFCU%20Stadium"
+full_schedule$VenueWeb[full_schedule$Venue=="St Mary's College"]<-"st_marys"
+full_schedule$VenueWeb[full_schedule$Venue=="Washington University - St. Louis"]<-"washington_university"
+full_schedule$VenueWeb[full_schedule$Venue=="Georgia Tech Roe Stamps Field"]<-"ga_tech_roe_stamps_field"
+full_schedule$VenueWeb[full_schedule$Venue=="Colorado State University-Pueblo"]<-"colorado_state_universitypueblo"
+full_schedule$VenueWeb[full_schedule$Venue=="TCU Intramural Field"]<-"tcu-intramural-field"
+full_schedule$VenueWeb[full_schedule$Venue=="St. Edwards"]<-"st_edwards"
+full_schedule$VenueWeb[full_schedule$Venue=="University of Tennessee"]<-"university_tennessee"
+full_schedule$VenueWeb[full_schedule$Venue=="Tarleton State University"]<-"tarleton_state"
+full_schedule$VenueWeb[full_schedule$Venue=="Ford Center"]<-"ford-center"
+full_schedule$VenueWeb[full_schedule$Venue=="Southeastern Soccer Complex (SELU)"]<-"southeastern-soccer-complex"
+full_schedule$VenueWeb[full_schedule$Venue=="Dacotah Field"]<-"north_dakota_state_university"
+full_schedule$VenueWeb[full_schedule$Venue=="NC State - Method Road Soccer Field"]<-"method_road_soccer_field"
+full_schedule$VenueWeb[full_schedule$Venue=="University of Texas - San Antonio"]<-"university_of_texassan_antonio"
+full_schedule$VenueWeb[full_schedule$Venue=="University of Colorado-Denver"]<-"colorado_denver"
+full_schedule$VenueWeb[full_schedule$Venue=="University of Puget Sound"]<-"puget_sound"
+full_schedule$VenueWeb[full_schedule$Venue=="Clark Field"]<-"clark-field"
+full_schedule$VenueWeb[full_schedule$Venue=="North Park Field"]<-"north_park_fields"
+full_schedule$VenueWeb[full_schedule$Venue=="UC-Irvine"]<-"ucirvine"
+full_schedule$VenueWeb[full_schedule$Venue=="Washington University - South Campus"]<-"washington_university_south"
+full_schedule$VenueWeb[full_schedule$Venue=="SIU Carbondale"]<-"siu-carbondale"
+full_schedule$VenueWeb[full_schedule$Venue=="Keiser University"]<-"keiser-university"
+full_schedule$VenueWeb[full_schedule$Venue=="Oregon - Nex-Turf Field"]<-"oregon_nex_turf_field"
+full_schedule$VenueWeb[full_schedule$Venue=="Gagliardi Dome (SJU)"]<-"gaglirdi-dome-sju-"
+full_schedule$VenueWeb[full_schedule$Venue=="Terry Fox Field"]<-"terry-fox-field"
+full_schedule$VenueWeb[full_schedule$Venue=="Park Tudor School"]<-"park-tudor"
+full_schedule$VenueWeb[full_schedule$Venue=="Texas A&M Galveston"]<-"texas_a_m_galveston"
+full_schedule$VenueWeb[full_schedule$Venue=="NAU South Field Recreation Complex"]<-"nau_south_intramural_fields"
+full_schedule$VenueWeb[full_schedule$Venue=="Stonehill College - WB Mason Stadium"]<-"stonehill_college_wb_mason_stadium"
+full_schedule$VenueWeb[full_schedule$Venue=="University of Minnesota (bubble)"]<-"minnesota_bubble"
+full_schedule$VenueWeb[full_schedule$Venue=="University Stadium - Chico"]<-"chico"
+full_schedule$VenueWeb[full_schedule$Venue=="University of Missouri S&T"]<-"university_of_missouri_st"
+full_schedule$VenueWeb[full_schedule$Venue=="Stephen F. Austin State University"]<-"stephen_f_austin_state_university"
+full_schedule$VenueWeb[full_schedule$Venue=="Momentum Rec Field"]<-"momentum-rec-field"
+full_schedule$VenueWeb[full_schedule$Venue=="University of California - Santa Cruz"]<-"university_of_california_santa_cruz"
+full_schedule$VenueWeb[full_schedule$Venue=="Intramural Club Sports Field (Monmouth, OR)"]<-"intramural_club_sports_field"
+full_schedule$VenueWeb[full_schedule$Venue=="Wade King Athletic Center"]<-"wade_king"
+full_schedule$VenueWeb[full_schedule$Venue=="Skyline High School"]<-"skyline-high-school"
+full_schedule$VenueWeb[full_schedule$Venue=="Sozo Sports Complex"]<-"sozo-sports-complex"
+full_schedule$VenueWeb[full_schedule$Venue=="SUNY-Purchase"]<-"suny_purchase"
+full_schedule$VenueWeb[full_schedule$Venue=="University of Colorado (Colorado Springs)"]<-"university_of_colorado_colorado_springs"
+full_schedule$VenueWeb[full_schedule$Venue=="Swensen Field"]<-"bridgewater_state_university"
+full_schedule$VenueWeb[full_schedule$Venue=="Strawberry Stadium"]<-"strawberry-stadium"
+full_schedule$VenueWeb[full_schedule$Venue=="Chapman Stadium"]<-"chapman"
+full_schedule$VenueWeb[full_schedule$Venue=="Arizona State University - West Campus"]<-"asu_west"
+full_schedule$VenueWeb[full_schedule$Venue=="Cromwell Field"]<-"usc"
+full_schedule$VenueWeb[full_schedule$Venue=="Segerstrom High School"]<-"segerstrom-high-school"
+full_schedule$VenueWeb[full_schedule$Venue=="Johnson Hagood Stadium"]<-"johnson_hagood"
+full_schedule$VenueWeb[full_schedule$Venue=="Argo Field"]<-"argo-field"
+full_schedule$VenueWeb[full_schedule$Venue=="Liberty Men's Lacrosse Field"]<-"liberty_mens_lacrosse_field"
+full_schedule$VenueWeb[full_schedule$Venue=="Oaks Christian High School"]<-"oaks-christian-high-school"
+full_schedule$VenueWeb[full_schedule$Venue=="Spence Eccles Ogden Community Sports Complex"]<-"spence-eccles-ogden-community-sports-complex"
+full_schedule$VenueWeb[full_schedule$Venue=="Central Florida - RWC Park"]<-"rwc-park-"
+full_schedule$VenueWeb[full_schedule$Venue=="Vanderbilt - Rec Field 2"]<-"vanderbilt-rec-field-2"
+full_schedule$VenueWeb[full_schedule$Venue=="Alabama Intramural Fields FIeld #1"]<-"alabama_intramural_fields"
+full_schedule$VenueWeb[full_schedule$Venue=="University of Utah"]<-"u_utah"
+full_schedule$VenueWeb[full_schedule$Venue=="UC-San Diego"]<-"ucsan_diego"
+full_schedule$VenueWeb[full_schedule$Venue=="Oconee County High School"]<-"oconee-county-high-school"
+full_schedule$VenueWeb[full_schedule$Venue=="USU Legacy Fields"]<-"usu_legacy"
+full_schedule$VenueWeb[full_schedule$Venue=="Moakley Park"]<-"moakley-park"
+full_schedule$VenueWeb[full_schedule$Venue=="Dick's Sporting Goods Park Field 8"]<-"dicks_sporting_goods_park_field_8"
+full_schedule$VenueWeb[full_schedule$Venue=="University of Nevada - Reno"]<-"university_of_nevada__reno"
+full_schedule$VenueWeb[full_schedule$Venue=="LSU Urec Fields"]<-"lsa_urec_fields"
+full_schedule$VenueWeb[full_schedule$Venue=="Brigham Young University - North Field"]<-"brigham_young_university_north_field"
+full_schedule$VenueWeb[full_schedule$Venue=="Regis Jesuit High School"]<-"regis-jesuit-high-school"
+full_schedule$VenueWeb[full_schedule$Venue=="Colorado State University-Ft. Collins"]<-"colorado_state_universityft_collins"
+full_schedule$VenueWeb[full_schedule$Venue=="University of Notre Dame"]<-"notre_dame"
+full_schedule$VenueWeb[full_schedule$Venue=="Greenbrier East High School"]<-"greenbrier-east-high-school"
+full_schedule$VenueWeb[full_schedule$Venue=="DE Turf Complex"]<-"de-turf-complex"
+full_schedule$VenueWeb[full_schedule$Venue=="Indiana University - Evan Williams (Grass)"]<-"indiana-university-evan-williams--grass-"
+full_schedule$VenueWeb[full_schedule$Venue=="Pacific Grove High School"]<-"pacific-grove-high-school"
+full_schedule$VenueWeb[full_schedule$Venue=="University of Dallas"]<-"university_dallas"
+full_schedule$VenueWeb[full_schedule$Venue=="Indiana University - Rec Sports Complex (Turf)"]<-"indiana-university-rec-sports-complex--turf-"
+full_schedule$VenueWeb[full_schedule$Venue=="John Coughlin Memorial Field"]<-"coughlin"
+full_schedule$VenueWeb[full_schedule$Venue=="Maple Grove Sports Dome"]<-"maple-grove-sports-dome"
+full_schedule$VenueWeb[full_schedule$Venue=="Eastern Florida State College"]<-"eastern-florida-state-college"
+full_schedule$VenueWeb[full_schedule$Venue=="Georgia Club Sports Complex"]<-"georgia_rec_complex"
+full_schedule$VenueWeb[full_schedule$Venue=="University of Buffalo"]<-"buffalo"
+full_schedule$VenueWeb[full_schedule$Venue=="Sierra Nevada College"]<-"sierra_nevada"
+full_schedule$VenueWeb[full_schedule$Venue=="Duck Samford (Auburn)"]<-"duck-samford-auburn-"
+full_schedule$VenueWeb[full_schedule$Venue=="O'Shaughnessy Stadium"]<-"oshaughnessy_stadium"
+full_schedule$VenueWeb[full_schedule$Venue=="West Virginia - University HS"]<-"west-virginia-university-hs"
+full_schedule$VenueWeb[full_schedule$Venue=="South Barrington Park District"]<-"south_barrington_park"
+full_schedule$VenueWeb[full_schedule$Venue=="George Pierce Park"]<-"george-pierce-park"
+full_schedule$VenueWeb[full_schedule$Venue=="TCF Bank Stadium"]<-"tcf_stadium"
+full_schedule$VenueWeb[full_schedule$Venue=="Ames - Field 1"]<-"ames_field_1"
+full_schedule$VenueWeb[full_schedule$Venue=="Salt Lake City RAC"]<-"salt-lake-city-rac"
+full_schedule$VenueWeb[full_schedule$Venue=="Foothill High School"]<-"foothill-high-school"
+full_schedule$VenueWeb[full_schedule$Venue=="Robb Athletic Field"]<-"robb-athletic-field"
+full_schedule
+
+
+full_schedule$GameType<-"Home"
+for(i in 1:length(full_schedule$Venue)){
   print(i)
   # create the webpage url using paste
-  thispage.url<-paste("http://mcla.us/venue/",all.pages$VenueWeb[i],sep="")
+  thispage.url<-paste("http://mcla.us/venue/",full_schedule$VenueWeb[i],sep="")
   # read webpage and store in memory
   thispage.webpage<-htmlParse(thispage.url)
   # create R dataset from webpage contents
   thispage<-readHTMLTable(thispage.webpage,
                           header=TRUE,which=1,stringsAsFactors=FALSE)
-  if(all.pages$Home[i]!=names(which.max(table(thispage$Home)))
-     | dim(thispage)[1]<5 ){all.pages$GameType[i]<-"Neutral"}
+  if(full_schedule$Home[i]!=names(which.max(table(thispage$Home)))
+     | dim(thispage)[1]<5 ){full_schedule$GameType[i]<-"Neutral"}
 }
 
 
 
 
 # handle some special cases where logic says Neutral but is really Homefield
-all.pages$GameType[all.pages$Home=="Virginia Tech"
-                   & all.pages$Venue=="Virginia Tech - The Marching Virginians Center"]<-"Home"
-all.pages$GameType[all.pages$Home=="Texas Christian"
-                   & all.pages$Venue=="TCU Intramural Field"]<-"Home"
-all.pages$GameType[all.pages$Home=="Southeastern Louisiana"
-                   & all.pages$Venue=="Southeastern Soccer Complex (SELU)"]<-"Home"
-all.pages$GameType[all.pages$Venue=="North Park Field"]<-"Neutral"
-all.pages$GameType[all.pages$Home=="Southern Illinois"
-                   & all.pages$Venue=="SIU Carbondale"]<-"Home"
-all.pages$GameType[all.pages$Home=="Keiser University"
-                   & all.pages$Venue=="Keiser University"]<-"Home"
-all.pages$GameType[all.pages$Home=="SUNY Purchase"
-                   & all.pages$Venue=="SUNY-Purchase"]<-"Home"
-all.pages$GameType[all.pages$Home=="UC Colorado Springs"
-                   & all.pages$Venue=="University of Colorado (Colorado Springs)"]<-"Home"
-all.pages$GameType[all.pages$Home=="Southeastern Louisiana"
-                   & all.pages$Venue=="Strawberry Stadium"]<-"Home"
-all.pages$GameType[all.pages$Home=="Weber State"
-                   & all.pages$Venue=="Spence Eccles Ogden Community Sports Complex"]<-"Home"
-all.pages$GameType[all.pages$Venue=="Vanderbilt - Rec Field 2"]<-"Neutral"
-all.pages$GameType[all.pages$Home=="Auburn"
-                   & all.pages$Venue=="Duck Samford (Auburn)"]<-"Home"
-all.pages$GameType[all.pages$Home=="West Virginia"
-                   & all.pages$Venue=="West Virginia - University HS"]<-"Home"
-all.pages$GameType[all.pages$Venue=="South Barrington Park District"]<-"Neutral"
+full_schedule$GameType[full_schedule$Home=="Virginia Tech"
+                   & full_schedule$Venue=="Virginia Tech - The Marching Virginians Center"]<-"Home"
+full_schedule$GameType[full_schedule$Home=="Texas Christian"
+                   & full_schedule$Venue=="TCU Intramural Field"]<-"Home"
+full_schedule$GameType[full_schedule$Home=="Southeastern Louisiana"
+                   & full_schedule$Venue=="Southeastern Soccer Complex (SELU)"]<-"Home"
+full_schedule$GameType[full_schedule$Venue=="North Park Field"]<-"Neutral"
+full_schedule$GameType[full_schedule$Home=="Southern Illinois"
+                   & full_schedule$Venue=="SIU Carbondale"]<-"Home"
+full_schedule$GameType[full_schedule$Home=="Keiser University"
+                   & full_schedule$Venue=="Keiser University"]<-"Home"
+full_schedule$GameType[full_schedule$Home=="SUNY Purchase"
+                   & full_schedule$Venue=="SUNY-Purchase"]<-"Home"
+full_schedule$GameType[full_schedule$Home=="UC Colorado Springs"
+                   & full_schedule$Venue=="University of Colorado (Colorado Springs)"]<-"Home"
+full_schedule$GameType[full_schedule$Home=="Southeastern Louisiana"
+                   & full_schedule$Venue=="Strawberry Stadium"]<-"Home"
+full_schedule$GameType[full_schedule$Home=="Weber State"
+                   & full_schedule$Venue=="Spence Eccles Ogden Community Sports Complex"]<-"Home"
+full_schedule$GameType[full_schedule$Venue=="Vanderbilt - Rec Field 2"]<-"Neutral"
+full_schedule$GameType[full_schedule$Home=="Auburn"
+                   & full_schedule$Venue=="Duck Samford (Auburn)"]<-"Home"
+full_schedule$GameType[full_schedule$Home=="West Virginia"
+                   & full_schedule$Venue=="West Virginia - University HS"]<-"Home"
+full_schedule$GameType[full_schedule$Venue=="South Barrington Park District"]<-"Neutral"
 
 
-mcla2018todate<-all.pages
+mcla2018todate<-full_schedule
 
 # data to investigate
 # 0-0
