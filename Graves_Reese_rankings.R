@@ -108,9 +108,40 @@ getFinishedResults <- function(df){
   results <- data.frame(Home.Team = finished_games$Home,
                         Away.Team = finished_games$Away,
                         Neutral = finished_games$GameType == "Neutral",
+                        Date = parse_date_time(finished_games$Date, "a b d"),
                         stringsAsFactors = FALSE)
   results$Winning.Team <- "Home"
   results$Winning.Team[finished_games$AwayGoals > finished_games$HomeGoals] <- "Visiting"
+  results <- determineBack2Back(results)
+  
+  
   return(results)
 }
+
+determineBack2Back <- function(results){
+  results$HomeBack2Back <- FALSE
+  results$AwayBack2Back <- FALSE
+  for(game_num in 2:nrow(results)){
+    home_team <- results$Home.Team[game_num]
+    away_team <-  results$Away.Team[game_num]
+    game_date <- results$Date[game_num]
+    home_team_games <- subset(results[-game_num,], Home.Team == home_team | Away.Team == home_team )
+    results$HomeBack2Back[game_num] <- any(difftime(home_team_games$Date, game_date, units = "days") == -days(1) )
+    away_team_games <- subset(results[-game_num,], Home.Team == away_team | Away.Team == away_team )
+    results$AwayBack2Back[game_num] <- any(difftime(away_team_games$Date, game_date, units = "days") == -days(1))
+  }
+  return(results)
+}
+
+getRecord <- function(team, results){
+  home_games <- subset(results, Home.Team == team)
+  wins <- sum(home_games$Winning.Team == "Home")
+  losses <- sum(home_games$Winning.Team != "Home")
+  
+  away_games <- subset(results, Away.Team == team)
+  wins <-  wins + sum(away_games$Winning.Team == "Visiting")
+  losses <- losses + sum(away_games$Winning.Team != "Visiting")
+  return(c(Wins = wins, Losses = losses))
+}
+
 
