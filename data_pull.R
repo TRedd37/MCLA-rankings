@@ -8,6 +8,15 @@ library(plyr)
 library(stringr)
 library(dplyr)
 
+
+teams_html <- htmlParse("http://mcla.us/teams")
+
+d1teams <-readHTMLTable(teams_html, header=FALSE, which=1, stringsAsFactors=FALSE)$V1
+d2teams <-readHTMLTable(teams_html, header=FALSE, which=2, stringsAsFactors=FALSE)$V1
+
+raw_prior_means <- rep(c(0.75, -0.75), times = c(length(d1teams ), length(d2teams)))
+names(raw_prior_means) <- c(d1teams, d2teams)
+
 # Games and Results
 
 # http://mcla.us/schedule/20187?page=1
