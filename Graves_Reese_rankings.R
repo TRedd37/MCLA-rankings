@@ -1,4 +1,6 @@
 
+library(lubridate)
+
 calculateRankings <- function(results, iters = 10000){
   A = 15
   B = 10
@@ -6,11 +8,15 @@ calculateRankings <- function(results, iters = 10000){
   candidate_sigma = .1
   
   teams <- unique(c(results$Home.Team, results$Away.Team))
+  prior_means <- raw_prior_means[teams]
+  prior_means[is.na(prior_means)] <- 0
+  names(prior_means) <- teams
   
   rankings <- matrix(0, iters, length(teams))
   colnames(rankings) <- teams
   sigma <- rep(1, iters)
   alpha <- rep(0, iters)
+  beta  <- rep(0, iters)
   
   pb <- txtProgressBar(min = 0, max = iters, style = 3)
   
@@ -20,11 +26,11 @@ calculateRankings <- function(results, iters = 10000){
     for(team in teams){
       old_ranking <- rankings[i, team]
       candidate_ranking <- rnorm(1, rankings[i-1, team], sqrt(candidate_sigma))
-      g_old <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i-1], 
-                          team_name = team, S = S)
+      g_old <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i-1], beta[i-1],
+                          team_name = team, S = S, prior_means)
       rankings[i, team ] <- candidate_ranking
-      g_cand <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i-1], 
-                           team_name = team, S = S)
+      g_cand <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i-1], beta[i-1],
+                           team_name = team, S = S, prior_means)
       log_acceptance_probability 	<- (g_cand - g_old)
       acceptance_value 		<- log(runif(1))
       if(log_acceptance_probability < acceptance_value){
@@ -33,46 +39,59 @@ calculateRankings <- function(results, iters = 10000){
     }
     
     alpha[i] <- rnorm(1, alpha[i-1], sqrt(candidate_sigma))
-    g_old <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i-1],
-                        team_name = NULL, S = S)
-    g_cand <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i],
-                         team_name =  NULL, S = S)
+    g_old <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i-1], beta[i-1],
+                        team_name = NULL, S = S, prior_means)
+    g_cand <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i], beta[i-1],
+                         team_name =  NULL, S = S, prior_means)
     log_acceptance_probability 	<- (g_cand - g_old)
     acceptance_value 		<- log(runif(1))
     if(log_acceptance_probability < acceptance_value){
       alpha[i] <- alpha[i-1]
     }
+    
+    beta[i] <- rnorm(1, beta[i-1], sqrt(candidate_sigma))
+    g_old <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i], beta[i-1],
+                        team_name = NULL, S = S, prior_means)
+    g_cand <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i], beta[i],
+                         team_name =  NULL, S = S, prior_means)
+    log_acceptance_probability 	<- (g_cand - g_old)
+    acceptance_value 		<- log(runif(1))
+    if(log_acceptance_probability < acceptance_value){
+      beta[i] <- beta[i-1]
+    }
+    
     sigma[i] <- 1/rgamma(1, A + (length(teams)/2) , rate = B + (sum(rankings[i, ]^2)/2))
   }
   
   output <- list(rankings = as.data.frame(rankings),
                  alpha = alpha,
-                 sigma = sigma)
+                 sigma = sigma,
+                 beta = beta)
   return(output)
 }
 
 
 
-calculateG <- function(results, rankings, sigma, alpha, team_name, S){
+calculateG <- function(results, rankings, sigma, alpha, b2b, team_name, S, prior_means){
   if(!is.null(team_name)){
     results <- results[results$Home.Team == team_name | results$Away.Team == team_name, ]
-  }
-  
+  } 
+
   probabilities <- rep(NA, nrow(results))
-  
   for(game in 1:nrow(results)){
     hfa <- alpha
     if(results$Neutral[game]){
       hfa <- 0
     }
-    home_ranking     <- exp(rankings[results$Home.Team[game]] + hfa)
-    visiting_ranking <- exp(rankings[results$Away.Team[game]])
+    home_ranking     <- exp(rankings[results$Home.Team[game]] + (b2b * results$HomeBack2Back[game]) + hfa)
+    visiting_ranking <- exp(rankings[results$Away.Team[game]] + (b2b * results$AwayBack2Back[game]))
     denominator      <- home_ranking + visiting_ranking
     probabilities[game] <- switch(results$Winning.Team[game],
                                   "Home" = home_ranking / denominator,
                                   "Visiting" = visiting_ranking / denominator)
   }
-  g <- sum(dnorm(rankings, 0, sqrt(sigma), log = TRUE)) +
+  
+  g <- sum(dnorm(rankings, prior_means[names(rankings)], sqrt(sigma), log = TRUE)) +
     dnorm(alpha, 0, sqrt(S), log = TRUE) +
     sum(log(probabilities)) 
   return(g)
@@ -126,9 +145,19 @@ determineBack2Back <- function(results){
     away_team <-  results$Away.Team[game_num]
     game_date <- results$Date[game_num]
     home_team_games <- subset(results[-game_num,], Home.Team == home_team | Away.Team == home_team )
-    results$HomeBack2Back[game_num] <- any(difftime(home_team_games$Date, game_date, units = "days") == -days(1) )
+    results$HomeBack2Back[game_num] <- any(difftime(home_team_games$Date, 
+                                                    game_date, 
+                                                    units = "days") == -days(1) |  
+                                           difftime(home_team_games$Date, 
+                                                    game_date, 
+                                                    units = "days") == -days(2))
     away_team_games <- subset(results[-game_num,], Home.Team == away_team | Away.Team == away_team )
-    results$AwayBack2Back[game_num] <- any(difftime(away_team_games$Date, game_date, units = "days") == -days(1))
+    results$AwayBack2Back[game_num] <- any(difftime(away_team_games$Date, 
+                                                    game_date, 
+                                                    units = "days") == -days(1) | 
+                                             difftime(away_team_games$Date, 
+                                                      game_date, 
+                                                      units = "days") == -days(2))
   }
   return(results)
 }
