@@ -26,10 +26,10 @@ calculateRankings <- function(results, iters = 10000){
     for(team in teams){
       old_ranking <- rankings[i, team]
       candidate_ranking <- rnorm(1, rankings[i-1, team], sqrt(candidate_sigma))
-      g_old <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i-1], beta[i-1],
+      g_old <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i-1],
                           team_name = team, S = S, prior_means)
       rankings[i, team ] <- candidate_ranking
-      g_cand <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i-1], beta[i-1],
+      g_cand <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i-1],
                            team_name = team, S = S, prior_means)
       log_acceptance_probability 	<- (g_cand - g_old)
       acceptance_value 		<- log(runif(1))
@@ -39,28 +39,18 @@ calculateRankings <- function(results, iters = 10000){
     }
     
     alpha[i] <- rnorm(1, alpha[i-1], sqrt(candidate_sigma))
-    g_old <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i-1], beta[i-1],
+    g_old <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i-1],
                         team_name = NULL, S = S, prior_means)
-    g_cand <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i], beta[i-1],
+    g_cand <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i],
                          team_name =  NULL, S = S, prior_means)
     log_acceptance_probability 	<- (g_cand - g_old)
     acceptance_value 		<- log(runif(1))
     if(log_acceptance_probability < acceptance_value){
       alpha[i] <- alpha[i-1]
     }
-    
-    beta[i] <- rnorm(1, beta[i-1], sqrt(candidate_sigma))
-    g_old <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i], beta[i-1],
-                        team_name = NULL, S = S, prior_means)
-    g_cand <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i], beta[i],
-                         team_name =  NULL, S = S, prior_means)
-    log_acceptance_probability 	<- (g_cand - g_old)
-    acceptance_value 		<- log(runif(1))
-    if(log_acceptance_probability < acceptance_value){
-      beta[i] <- beta[i-1]
-    }
-    
-    sigma[i] <- 1/rgamma(1, A + (length(teams)/2) , rate = B + (sum(rankings[i, ]^2)/2))
+
+    sigma[i] <- 1/rgamma(1, A + (length(teams)/2) , 
+                         rate = B + (sum((rankings[i, ] - prior_means[colnames(rankings)]) ^2)/2))
   }
   
   output <- list(rankings = as.data.frame(rankings),
@@ -72,7 +62,7 @@ calculateRankings <- function(results, iters = 10000){
 
 
 
-calculateG <- function(results, rankings, sigma, alpha, b2b, team_name, S, prior_means){
+calculateG <- function(results, rankings, sigma, alpha, team_name, S, prior_means){
   if(!is.null(team_name)){
     results <- results[results$Home.Team == team_name | results$Away.Team == team_name, ]
   } 
@@ -83,8 +73,8 @@ calculateG <- function(results, rankings, sigma, alpha, b2b, team_name, S, prior
     if(results$Neutral[game]){
       hfa <- 0
     }
-    home_ranking     <- exp(rankings[results$Home.Team[game]] + (b2b * results$HomeBack2Back[game]) + hfa)
-    visiting_ranking <- exp(rankings[results$Away.Team[game]] + (b2b * results$AwayBack2Back[game]))
+    home_ranking     <- exp(rankings[results$Home.Team[game]] + hfa)
+    visiting_ranking <- exp(rankings[results$Away.Team[game]])
     denominator      <- home_ranking + visiting_ranking
     probabilities[game] <- switch(results$Winning.Team[game],
                                   "Home" = home_ranking / denominator,
@@ -131,34 +121,7 @@ getFinishedResults <- function(df){
                         stringsAsFactors = FALSE)
   results$Winning.Team <- "Home"
   results$Winning.Team[finished_games$AwayGoals > finished_games$HomeGoals] <- "Visiting"
-  results <- determineBack2Back(results)
-  
-  
-  return(results)
-}
 
-determineBack2Back <- function(results){
-  results$HomeBack2Back <- FALSE
-  results$AwayBack2Back <- FALSE
-  for(game_num in 2:nrow(results)){
-    home_team <- results$Home.Team[game_num]
-    away_team <-  results$Away.Team[game_num]
-    game_date <- results$Date[game_num]
-    home_team_games <- subset(results[-game_num,], Home.Team == home_team | Away.Team == home_team )
-    results$HomeBack2Back[game_num] <- any(difftime(home_team_games$Date, 
-                                                    game_date, 
-                                                    units = "days") == -days(1) |  
-                                           difftime(home_team_games$Date, 
-                                                    game_date, 
-                                                    units = "days") == -days(2))
-    away_team_games <- subset(results[-game_num,], Home.Team == away_team | Away.Team == away_team )
-    results$AwayBack2Back[game_num] <- any(difftime(away_team_games$Date, 
-                                                    game_date, 
-                                                    units = "days") == -days(1) | 
-                                             difftime(away_team_games$Date, 
-                                                      game_date, 
-                                                      units = "days") == -days(2))
-  }
   return(results)
 }
 
