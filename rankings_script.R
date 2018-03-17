@@ -1,5 +1,5 @@
 source("../../../../Personal projects/MCLA-rankings/data_pull.R")
-source("http://grimshawville.byu.edu/makedataMCLA2018.R")
+#source("http://grimshawville.byu.edu/makedataMCLA2018.R")
 source("../../../../Personal projects/MCLA-rankings/Graves_Reese_rankings.R")
 
 mcla2018todate$date <- parse_date_time(mcla2018todate$Date, "a b d")
