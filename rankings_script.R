@@ -9,24 +9,18 @@ results <- getFinishedResults(mcla2018todate)
 
 model_output <- calculateRankings(results, 5000)
 
-rankings <- data.frame(School = names(extractRankings(output)),
-                       Score  = extractRankings(output),
-                       Rank   = 1:length(extractRankings(output)),
+rankings <- data.frame(School = names(extractRankings(model_output)),
+                       Score  = extractRankings(model_output),
+                       Rank   = 1:length(extractRankings(model_output)),
                        Division = 1,
                        stringsAsFactors = FALSE)
 record   <- ldply(rankings$School,  getRecord, results = results)
 rankings <- cbind(rankings, record)
 rankings$Division[rankings$School %in% d2teams] <- 2
 
-subset(results, Home.Team == "Brigham Young" | Away.Team == "Brigham Young")
-
 which(rankings$School == "Brigham Young")
 
 1-predictGameOutcome("Utah", "Brigham Young", output)
-
-
-netteam_list <- as.list(sort(rankings$School))
-names(team_list) <- sort(rankings$School)
 
 save(results, rankings, model_output, file = "../../../../Personal projects/MCLA-rankings/backup.RData")
 
