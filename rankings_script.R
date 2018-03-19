@@ -1,5 +1,5 @@
+games_through <- lubridate::now()
 source("data_pull.R")
-#source("http://grimshawville.byu.edu/makedataMCLA2018.R")
 source("Graves_Reese_rankings.R")
 
 mcla2018todate$date <- parse_date_time(mcla2018todate$Date, "a b d")
@@ -17,11 +17,15 @@ record   <- ldply(rankings$School,  getRecord, results = results)
 rankings <- cbind(rankings, record)
 rankings$Division[rankings$School %in% d2teams] <- 2
 
-which(rankings$School == "Brigham Young")
+save(games_through, updated_at, results, rankings, model_output, file = "../ShinyApps/MCLA_rankings/backup.RData")
+time_stamp_file <- paste0("../ShinyApps/MCLA_rankings/old_data/backup_",  
+                          format(now(), "%Y_%m_%d %H_%M_%S"), 
+                          ".RData")
 
-1-predictGameOutcome("Utah", "Brigham Young", model_output)
+updated_at <- now()
+save(games_through, updated_at, results, rankings, model_output, file = time_stamp_file)
 
-save(results, rankings, model_output, file = "../../../../Personal projects/MCLA-rankings/backup.RData")
+system("touch ../ShinyApps/MCLA_rankings/restart.txt")
 
 
 

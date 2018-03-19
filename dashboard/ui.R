@@ -2,7 +2,7 @@ library(shiny)
 
 
 shinyUI(fluidPage(
-  titlePanel("Redd's Rankings"),
+  titlePanel(paste0("Redd's Rankings\nGames Through: :", games_through)),
   mainPanel(
     tabsetPanel(
       tabPanel("Rankings",  dataTableOutput("rankings") ),
