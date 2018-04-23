@@ -34,7 +34,7 @@ getSchedulePage <- function(i){
   return(schedule)
 }
 
-full_schedule <- ldply(1:22, getSchedulePage)
+full_schedule <- ldply(1:24, getSchedulePage)
 
 # parse score
 
@@ -211,21 +211,24 @@ readVenueTable <- function(i){
   return(table)
 }
 
+fields_home_team <- "unknown"
 full_schedule$GameType <- "Home"
 for(i in 1:nrow(full_schedule)){
   thispage <- tryCatch(readVenueTable(i), 
                        error = function(e) print(i) )
   if(is.numeric(thispage) || nrow(thispage) < 5 ){
     print(full_schedule$Venue[i])
-    fields_home_team <- "unknown"
+    fields_home_team[i] <- "unknown"
   } else {
-    fields_home_team <- names(which.max(table(thispage$Home)))
+    fields_home_team[i] <- names(which.max(table(thispage$Home)))
   }
   
-  if(full_schedule$Home[i] != fields_home_team  ){
+  if(full_schedule$Home[i] != fields_home_team[i]  ){
     full_schedule$GameType[i] <- "Neutral"
   }
 }
+
+
 
 # handle some special cases where logic says Neutral but is really Homefield
 full_schedule$GameType[full_schedule$Home=="Virginia Tech"
