@@ -87,12 +87,15 @@ calculateG <- function(results, rankings, sigma, alpha, team_name, S, prior_mean
   return(g)
 }
 
-predictGameOutcome <- function(home_team, visiting_team, output, simulations = 10000 ){
+predictGameOutcome <- function(home_team, visiting_team, output, simulations = 10000, neutral = FALSE ){
   alpha = data.frame(alpha = output$alpha)
   home_team_ratings     <- dplyr::sample_n(output$rankings, simulations, replace = TRUE)[, home_team]
   visiting_team_ratings <- dplyr::sample_n(output$rankings, simulations, replace = TRUE)[ , visiting_team]
   hfa                   <- dplyr::sample_n(alpha, simulations, replace = TRUE)
-  
+  if(neutral){
+    hfa = dplyr::sample_n(data.frame(dummy = 0), simulations, replace = TRUE)
+  }
+
   home_score <- exp(home_team_ratings + hfa)
   visiting_score <- exp(visiting_team_ratings)
   denominator <- home_score + visiting_score
