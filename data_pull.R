@@ -24,7 +24,7 @@ names(raw_prior_means) <- c(d1teams, d2teams)
 
 
 getSchedulePage <- function(i){
-  schedule_url  <- paste0("http://mcla.us/schedule/2018?page=", i)
+  schedule_url  <- paste0("http://mcla.us/schedule/2019?page=", i)
   schedule_html <- htmlParse(schedule_url)
   schedule <-readHTMLTable(schedule_html, header=TRUE, which=1, stringsAsFactors=FALSE)
   # is this a page of results or future games
@@ -34,7 +34,7 @@ getSchedulePage <- function(i){
   return(schedule)
 }
 
-full_schedule <- ldply(1:24, getSchedulePage)
+full_schedule <- ldply(1:20, getSchedulePage)
 
 # parse score
 
