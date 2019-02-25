@@ -18,10 +18,13 @@ rankings <- cbind(rankings, record)
 rankings$Division[rankings$School %in% d2teams] <- 2
 
 updated_at <- lubridate::now()
-save(games_through, updated_at, results, rankings, model_output, file = "../ShinyApps/MCLA_rankings/backup.RData")
+
+#source("tournaments.R")
+
+save(games_through, updated_at, results, rankings, model_output, d1_output, d2_output, file = "../ShinyApps/MCLA_rankings/backup.RData")
 time_stamp_file <- paste0("old data/backup_", format(now(), "%Y_%m_%d %H_%M_%S"), ".RData")
 
-save(games_through, updated_at, results, rankings, model_output, file = time_stamp_file)
+save(games_through, updated_at, results, rankings, model_output, d1_output, d2_output, file = time_stamp_file)
 
 system("touch ../ShinyApps/MCLA_rankings/restart.txt")
 
