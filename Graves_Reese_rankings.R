@@ -1,7 +1,7 @@
 
 library(lubridate)
 
-calculateRankings <- function(results, iters = 10000){
+calculateRankings <- function(results, iters = 10000, WF_method = "absolute"){
   A = 15
   B = 10
   S = 1.5
@@ -27,10 +27,10 @@ calculateRankings <- function(results, iters = 10000){
       old_ranking <- rankings[i, team]
       candidate_ranking <- rnorm(1, rankings[i-1, team], sqrt(candidate_sigma))
       g_old <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i-1],
-                          team_name = team, S = S, prior_means)
+                          team_name = team, S = S, prior_means, WF_method)
       rankings[i, team ] <- candidate_ranking
       g_cand <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i-1],
-                           team_name = team, S = S, prior_means)
+                           team_name = team, S = S, prior_means, WF_method)
       log_acceptance_probability 	<- (g_cand - g_old)
       acceptance_value 		<- log(runif(1))
       if(log_acceptance_probability < acceptance_value){
@@ -40,9 +40,9 @@ calculateRankings <- function(results, iters = 10000){
     
     alpha[i] <- rnorm(1, alpha[i-1], sqrt(candidate_sigma))
     g_old <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i-1],
-                        team_name = NULL, S = S, prior_means)
+                        team_name = NULL, S = S, prior_means, WF_method)
     g_cand <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i],
-                         team_name =  NULL, S = S, prior_means)
+                         team_name =  NULL, S = S, prior_means, WF_method)
     log_acceptance_probability 	<- (g_cand - g_old)
     acceptance_value 		<- log(runif(1))
     if(log_acceptance_probability < acceptance_value){
@@ -62,7 +62,7 @@ calculateRankings <- function(results, iters = 10000){
 
 
 
-calculateG <- function(results, rankings, sigma, alpha, team_name, S, prior_means){
+calculateG <- function(results, rankings, sigma, alpha, team_name, S, prior_means, WF_method){
   if(!is.null(team_name)){
     results <- results[results$Home.Team == team_name | results$Away.Team == team_name, ]
   } 
