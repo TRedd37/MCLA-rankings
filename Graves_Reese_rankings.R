@@ -115,15 +115,17 @@ extractRankings <- function(model_output, burn_in_rate = 0.1){
 }
 
 getFinishedResults <- function(df){
-  finished_games <- subset(df, !is.na(HomeGoals) & (HomeGoals != AwayGoals))
   
-  results <- data.frame(Home.Team = finished_games$Home,
-                        Away.Team = finished_games$Away,
-                        Neutral = finished_games$GameType == "Neutral",
-                        Date = parse_date_time(finished_games$Date, "a b d"),
-                        stringsAsFactors = FALSE)
-  results$Winning.Team <- "Home"
-  results$Winning.Team[finished_games$AwayGoals > finished_games$HomeGoals] <- "Visiting"
+  finished_games <- df %>%
+    filter(!is.na(HomeGoals), HomeGoals != AwayGoals)
+  
+  results <- finished_games %>%
+    mutate(Neutral = GameType == "Neutral") %>%
+    select(Home, Away, Date, AwayGoals, HomeGoals, Neutral) %>%
+    mutate(Date = parse_date_time(Date, "a b d")) %>%
+    rename(Home.Team = "Home") %>%
+    rename(Away.Team = "Away") %>%
+    mutate(Winning.Team = ifelse(AwayGoals > HomeGoals, "Visiting", "Home"))
 
   return(results)
 }
