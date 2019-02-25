@@ -67,20 +67,21 @@ calculateG <- function(results, rankings, sigma, alpha, team_name, S, prior_mean
     results <- results[results$Home.Team == team_name | results$Away.Team == team_name, ]
   } 
 
-  probabilities <- rep(NA, nrow(results))
-  for(game in 1:nrow(results)){
-    hfa <- alpha
-    if(results$Neutral[game]){
-      hfa <- 0
-    }
-    home_ranking     <- exp(rankings[results$Home.Team[game]] + hfa)
-    visiting_ranking <- exp(rankings[results$Away.Team[game]])
-    denominator      <- home_ranking + visiting_ranking
-    probabilities[game] <- switch(results$Winning.Team[game],
-                                  "Home" = home_ranking / denominator,
-                                  "Visiting" = visiting_ranking / denominator)
-  }
+  results <- results %>%
+    mutate(HomeWinFraction = calculcateWinFraction(., WF_method))
   
+  hfa <- rep(alpha, nrow(results))
+  hfa[(results$Neutral == TRUE)] <- 0
+
+  phi_home    <- exp(rankings[results$Home.Team] + hfa)
+  phi_away    <- exp(rankings[results$Away.Team])
+  denominator <- phi_home + phi_away
+  phi         <- phi_home / denominator
+  
+  WF <- results$HomeWinFraction
+  
+  probabilities <- phi^WF * (1 - phi)^(1-WF)
+
   g <- sum(dnorm(rankings, prior_means[names(rankings)], sqrt(sigma), log = TRUE)) +
     dnorm(alpha, 0, sqrt(S), log = TRUE) +
     sum(log(probabilities)) 
@@ -140,5 +141,17 @@ getRecord <- function(team, results){
   losses <- losses + sum(away_games$Winning.Team != "Visiting")
   return(c(Wins = wins, Losses = losses))
 }
+
+calculcateWinFraction <- function(df, method = "absolute"){
+  winFraction <- switch(
+    method,
+    "absolute" = as.numeric(df$HomeGoals > df$AwayGoals),
+    "relative" = df$HomeGoals / (df$AwayGoals + df$HomeGoals),
+    stop("Not a valid method")
+  )
+  return(winFraction)
+}
+
+
 
 
