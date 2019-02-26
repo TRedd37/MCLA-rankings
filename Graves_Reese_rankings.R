@@ -1,7 +1,7 @@
 
 library(lubridate)
 
-calculateRankings <- function(results, iters = 10000, WF_method = "absolute"){
+calculateRankings <- function(results, iters = 10000, WF_method = "absolute", HFA = TRUE){
   A = 15
   B = 10
   S = 1.5
@@ -37,18 +37,20 @@ calculateRankings <- function(results, iters = 10000, WF_method = "absolute"){
         rankings[i, team ] <- old_ranking
       }
     }
-    
-    alpha[i] <- rnorm(1, alpha[i-1], sqrt(candidate_sigma))
-    g_old <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i-1],
-                        team_name = NULL, S = S, prior_means, WF_method)
-    g_cand <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i],
-                         team_name =  NULL, S = S, prior_means, WF_method)
-    log_acceptance_probability 	<- (g_cand - g_old)
-    acceptance_value 		<- log(runif(1))
-    if(log_acceptance_probability < acceptance_value){
-      alpha[i] <- alpha[i-1]
+    if(HFA){
+      alpha[i] <- rnorm(1, alpha[i-1], sqrt(candidate_sigma))
+      
+      g_old  <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i-1],
+                           team_name = NULL, S = S, prior_means, WF_method)
+      g_cand <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i],
+                           team_name =  NULL, S = S, prior_means, WF_method)
+      log_acceptance_probability 	<- (g_cand - g_old)
+      acceptance_value 		<- log(runif(1))
+      if(log_acceptance_probability < acceptance_value){
+        alpha[i] <- alpha[i-1]
+      }
     }
-
+  
     sigma[i] <- 1/rgamma(1, A + (length(teams)/2) , 
                          rate = B + (sum((rankings[i, ] - prior_means[colnames(rankings)]) ^2)/2))
   }
