@@ -147,11 +147,21 @@ calculcateWinFraction <- function(df, method = "absolute"){
     method,
     "absolute" = as.numeric(df$HomeGoals > df$AwayGoals),
     "relative" = df$HomeGoals / (df$AwayGoals + df$HomeGoals),
+    "step"     = calculateStepWF(df),
     stop("Not a valid method")
   )
   return(winFraction)
 }
 
+calculateStepWF <- function(df){
+  wf <- bound(.5 + (df$HomeGoals - df$AwayGoals) *.1, 0, 1)
+  return(wf)
+}
 
+bound <- function(x, lb, ub){
+  x[x < lb] <- lb
+  x[x > ub] <- ub
+  return(x)
+}
 
 
