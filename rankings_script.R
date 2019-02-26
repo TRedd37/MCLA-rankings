@@ -6,7 +6,8 @@ mcla2018todate$date <- parse_date_time(mcla2018todate$Date, "a b d")
 
 results <- getFinishedResults(mcla2018todate)
 
-model_output <- calculateRankings(results, 50000)
+model_output <- calculateRankings(results, 50000, WF_method = "relative")
+model_output_step <- calculateRankings(results, 50000, WF_method = "step", HFA = FALSE)
 
 rankings <- buildRankingsDF(model_output_step, results)
 rankings
