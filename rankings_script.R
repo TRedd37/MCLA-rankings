@@ -1,6 +1,6 @@
 games_through <- lubridate::now()
-source("data_pull.R")
-source("Graves_Reese_rankings.R")
+source("../../../../Personal/Git/MCLA-rankings/data_pull.R")
+source("../../../../Personal/Git/MCLA-rankings/Graves_Reese_rankings.R")
 
 mcla2018todate$date <- parse_date_time(mcla2018todate$Date, "a b d")
 
