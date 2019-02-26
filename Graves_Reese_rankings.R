@@ -166,4 +166,20 @@ bound <- function(x, lb, ub){
   return(x)
 }
 
+buildRankingsDF <- function(model_output, results){
+  rankings <- data.frame(School = names(extractRankings(model_output)),
+                         Score  = extractRankings(model_output),
+                         Rank   = 1:length(extractRankings(model_output)),
+                         Division = 1,
+                         stringsAsFactors = FALSE)
+  record   <- ldply(rankings$School,  getRecord, results = results)
+  
+  rankings <- rankings %>%
+    bind_cols(record)
+  rankings$Division[rankings$School %in% d2teams] <- 2
+  rankings <- rankings %>% 
+    filter(School %in% union(d2teams, d1teams))
+  return(rankings)
+}
+
 
