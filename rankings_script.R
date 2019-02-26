@@ -8,14 +8,8 @@ results <- getFinishedResults(mcla2018todate)
 
 model_output <- calculateRankings(results, 50000)
 
-rankings <- data.frame(School = names(extractRankings(model_output)),
-                       Score  = extractRankings(model_output),
-                       Rank   = 1:length(extractRankings(model_output)),
-                       Division = 1,
-                       stringsAsFactors = FALSE)
-record   <- ldply(rankings$School,  getRecord, results = results)
-rankings <- cbind(rankings, record)
-rankings$Division[rankings$School %in% d2teams] <- 2
+rankings <- buildRankingsDF(model_output_step, results)
+rankings
 
 updated_at <- lubridate::now()
 
