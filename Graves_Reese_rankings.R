@@ -8,7 +8,7 @@ calculateRankings <- function(results, iters = 10000, WF_method = "absolute", HF
   
   A = 15
   B = 10
-  S = 1.5
+  S = .15
   candidate_sigma = .1
   
   teams <- unique(c(results$Home.Team, results$Away.Team))
