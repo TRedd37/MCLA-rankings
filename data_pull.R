@@ -268,4 +268,4 @@ full_schedule$GameType[full_schedule$Home=="Montana"
                    & full_schedule$Venue=="Fort Missoula Regional Park"] <- "Home"
 
 
-mcla2018todate <- cbind(full_schedule, scores)
+mcla2019todate <- cbind(full_schedule, scores)

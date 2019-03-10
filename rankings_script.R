@@ -1,10 +1,13 @@
 games_through <- lubridate::now()
-source("../../../../Personal/Git/MCLA-rankings/data_pull.R")
-source("../../../../Personal/Git/MCLA-rankings/Graves_Reese_rankings.R")
+source("data_pull.R")
+source("Graves_Reese_rankings.R")
 
-mcla2018todate$date <- parse_date_time(mcla2018todate$Date, "a b d")
+mcla2019todate$date <- parse_date_time(mcla2019todate$Date, "a b d")
 
-results <- getFinishedResults(mcla2018todate)
+results <- mcla2019todate %>%
+  filter(!(Away == "Florida" & Home == "North Florida")) %>%
+  filter(!(Away == "Kennesaw State" & Home == "Georgia")) %>%
+  getFinishedResults()
 
 
 model_output <- calculateRankings(results, 50000)
