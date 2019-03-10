@@ -162,6 +162,12 @@ calculateStepWF <- function(df){
   return(wf)
 }
 
+calculateLogitWF <- function(df, denominator = 2){
+  differential <- df$HomeGoals - df$AwayGoals
+  wf <- exp(differential / denominator) / (1 + exp(differential / denominator))
+  return(wf)
+}
+
 bound <- function(x, lb, ub){
   x[x < lb] <- lb
   x[x > ub] <- ub

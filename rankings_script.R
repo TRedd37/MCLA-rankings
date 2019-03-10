@@ -6,11 +6,17 @@ mcla2018todate$date <- parse_date_time(mcla2018todate$Date, "a b d")
 
 results <- getFinishedResults(mcla2018todate)
 
-model_output <- calculateRankings(results, 50000, WF_method = "relative")
-model_output_step <- calculateRankings(results, 50000, WF_method = "step", HFA = FALSE)
 
-rankings <- buildRankingsDF(model_output_step, results)
-rankings
+model_output <- calculateRankings(results, 50000)
+model_output_wo_HFA <- calculateRankings(results, 50000, HFA = FALSE)
+model_step_HFA <- calculateRankings(results, 50000, WF_method = "step")
+model_logit_HFA <- calculateRankings(results, 50000, WF_method = "logit")
+model_step <- calculateRankings(results, 50000, WF_method = "step", HFA = FALSE)
+model_logit <- calculateRankings(results, 50000, WF_method = "logit", HFA = FALSE)
+
+rankings <- buildRankingsDF(model_output, results)
+rankings_step <- buildRankingsDF(model_output_step, results)
+rankings_logit <- buildRankingsDF(model_output_logit, results)
 
 updated_at <- lubridate::now()
 
