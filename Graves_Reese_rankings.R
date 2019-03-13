@@ -1,10 +1,14 @@
 
 library(lubridate)
 
-calculateRankings <- function(results, iters = 10000){
+calculateRankings <- function(results, iters = 10000, WF_method = "absolute", HFA = TRUE){
+  
+  results <- results %>%
+    mutate(HomeWinFraction = calculcateWinFraction(., WF_method))
+  
   A = 15
   B = 10
-  S = 1.5
+  S = .15
   candidate_sigma = .1
   
   teams <- unique(c(results$Home.Team, results$Away.Team))
@@ -37,18 +41,20 @@ calculateRankings <- function(results, iters = 10000){
         rankings[i, team ] <- old_ranking
       }
     }
-    
-    alpha[i] <- rnorm(1, alpha[i-1], sqrt(candidate_sigma))
-    g_old <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i-1],
-                        team_name = NULL, S = S, prior_means)
-    g_cand <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i],
-                         team_name =  NULL, S = S, prior_means)
-    log_acceptance_probability 	<- (g_cand - g_old)
-    acceptance_value 		<- log(runif(1))
-    if(log_acceptance_probability < acceptance_value){
-      alpha[i] <- alpha[i-1]
+    if(HFA){
+      alpha[i] <- rnorm(1, alpha[i-1], sqrt(candidate_sigma))
+      
+      g_old  <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i-1],
+                           team_name = NULL, S = S, prior_means)
+      g_cand <- calculateG(results, rankings[i, ], sigma[i-1], alpha[i],
+                           team_name =  NULL, S = S, prior_means)
+      log_acceptance_probability 	<- (g_cand - g_old)
+      acceptance_value 		<- log(runif(1))
+      if(log_acceptance_probability < acceptance_value){
+        alpha[i] <- alpha[i-1]
+      }
     }
-
+  
     sigma[i] <- 1/rgamma(1, A + (length(teams)/2) , 
                          rate = B + (sum((rankings[i, ] - prior_means[colnames(rankings)]) ^2)/2))
   }
@@ -64,23 +70,22 @@ calculateRankings <- function(results, iters = 10000){
 
 calculateG <- function(results, rankings, sigma, alpha, team_name, S, prior_means){
   if(!is.null(team_name)){
-    results <- results[results$Home.Team == team_name | results$Away.Team == team_name, ]
+    results <- results %>%
+      filter(Home.Team == team_name | Away.Team == team_name)
   } 
-
-  probabilities <- rep(NA, nrow(results))
-  for(game in 1:nrow(results)){
-    hfa <- alpha
-    if(results$Neutral[game]){
-      hfa <- 0
-    }
-    home_ranking     <- exp(rankings[results$Home.Team[game]] + hfa)
-    visiting_ranking <- exp(rankings[results$Away.Team[game]])
-    denominator      <- home_ranking + visiting_ranking
-    probabilities[game] <- switch(results$Winning.Team[game],
-                                  "Home" = home_ranking / denominator,
-                                  "Visiting" = visiting_ranking / denominator)
-  }
   
+  hfa <- rep(alpha, nrow(results))
+  hfa[(results$Neutral == TRUE)] <- 0
+
+  phi_home    <- exp(rankings[results$Home.Team] + hfa)
+  phi_away    <- exp(rankings[results$Away.Team])
+  denominator <- phi_home + phi_away
+  phi         <- phi_home / denominator
+  
+  WF <- results$HomeWinFraction
+  
+  probabilities <- phi^WF * (1 - phi)^(1-WF)
+
   g <- sum(dnorm(rankings, prior_means[names(rankings)], sqrt(sigma), log = TRUE)) +
     dnorm(alpha, 0, sqrt(S), log = TRUE) +
     sum(log(probabilities)) 
@@ -115,15 +120,17 @@ extractRankings <- function(model_output, burn_in_rate = 0.1){
 }
 
 getFinishedResults <- function(df){
-  finished_games <- subset(df, !is.na(HomeGoals) & (HomeGoals != AwayGoals))
   
-  results <- data.frame(Home.Team = finished_games$Home,
-                        Away.Team = finished_games$Away,
-                        Neutral = finished_games$GameType == "Neutral",
-                        Date = parse_date_time(finished_games$Date, "a b d"),
-                        stringsAsFactors = FALSE)
-  results$Winning.Team <- "Home"
-  results$Winning.Team[finished_games$AwayGoals > finished_games$HomeGoals] <- "Visiting"
+  finished_games <- df %>%
+    filter(!is.na(HomeGoals), HomeGoals != AwayGoals)
+  
+  results <- finished_games %>%
+    mutate(Neutral = GameType == "Neutral") %>%
+    select(Home, Away, Date, AwayGoals, HomeGoals, Neutral) %>%
+    mutate(Date = parse_date_time(Date, "a b d")) %>%
+    rename(Home.Team = "Home") %>%
+    rename(Away.Team = "Away") %>%
+    mutate(Winning.Team = ifelse(AwayGoals > HomeGoals, "Visiting", "Home"))
 
   return(results)
 }
@@ -137,6 +144,51 @@ getRecord <- function(team, results){
   wins <-  wins + sum(away_games$Winning.Team == "Visiting")
   losses <- losses + sum(away_games$Winning.Team != "Visiting")
   return(c(Wins = wins, Losses = losses))
+}
+
+calculcateWinFraction <- function(df, method = "absolute"){
+  winFraction <- switch(
+    method,
+    "absolute" = as.numeric(df$HomeGoals > df$AwayGoals),
+    "relative" = df$HomeGoals / (df$AwayGoals + df$HomeGoals),
+    "step"     = calculateStepWF(df),
+    "logit"    = calculateLogitWF(df), 
+    stop("Not a valid method")
+  )
+  return(winFraction)
+}
+
+calculateStepWF <- function(df){
+  wf <- bound(.5 + (df$HomeGoals - df$AwayGoals) *.1, 0, 1)
+  return(wf)
+}
+
+calculateLogitWF <- function(df, denominator = 2){
+  differential <- df$HomeGoals - df$AwayGoals
+  wf <- exp(differential / denominator) / (1 + exp(differential / denominator))
+  return(wf)
+}
+
+bound <- function(x, lb, ub){
+  x[x < lb] <- lb
+  x[x > ub] <- ub
+  return(x)
+}
+
+buildRankingsDF <- function(model_output, results){
+  rankings <- data.frame(School = names(extractRankings(model_output)),
+                         Score  = extractRankings(model_output),
+                         Rank   = 1:length(extractRankings(model_output)),
+                         Division = 1,
+                         stringsAsFactors = FALSE)
+  record   <- ldply(rankings$School,  getRecord, results = results)
+  
+  rankings <- rankings %>%
+    bind_cols(record)
+  rankings$Division[rankings$School %in% d2teams] <- 2
+  rankings <- rankings %>% 
+    filter(School %in% union(d2teams, d1teams))
+  return(rankings)
 }
 
 
