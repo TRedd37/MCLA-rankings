@@ -70,7 +70,8 @@ calculateRankings <- function(results, iters = 10000, WF_method = "absolute", HF
 
 calculateG <- function(results, rankings, sigma, alpha, team_name, S, prior_means){
   if(!is.null(team_name)){
-    results <- results[results$Home.Team == team_name | results$Away.Team == team_name, ]
+    results <- results %>%
+      filter(Home.Team == team_name | Away.Team == team_name)
   } 
   
   hfa <- rep(alpha, nrow(results))
