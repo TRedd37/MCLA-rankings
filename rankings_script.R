@@ -2,26 +2,41 @@ games_through <- lubridate::now()
 source("data_pull.R")
 source("Graves_Reese_rankings.R")
 
-mcla2018todate$date <- parse_date_time(mcla2018todate$Date, "a b d")
+mcla2019todate$date <- parse_date_time(mcla2019todate$Date, "a b d")
 
-results <- getFinishedResults(mcla2018todate)
+results <- mcla2019todate %>%
+  filter(!(Away == "Florida" & Home == "North Florida")) %>%
+  filter(!(Away == "Kennesaw State" & Home == "Georgia")) %>%
+  getFinishedResults()
 
-model_output <- calculateRankings(results, 50000)
+iterations <- 50000
 
-rankings <- data.frame(School = names(extractRankings(model_output)),
-                       Score  = extractRankings(model_output),
-                       Rank   = 1:length(extractRankings(model_output)),
-                       Division = 1,
-                       stringsAsFactors = FALSE)
-record   <- ldply(rankings$School,  getRecord, results = results)
-rankings <- cbind(rankings, record)
-rankings$Division[rankings$School %in% d2teams] <- 2
 
+model_output        <- calculateRankings(results, iterations)
+model_output_wo_HFA <- calculateRankings(results, iterations, HFA = FALSE)
+model_step          <- calculateRankings(results, iterations, WF_method = "step", HFA = FALSE)
+model_logit         <- calculateRankings(results, iterations, WF_method = "logit", HFA = FALSE)
+model_step_HFA      <- calculateRankings(results, iterations, WF_method = "step")
+model_logit_HFA     <- calculateRankings(results, iterations, WF_method = "logit")
+model_least_square  <- leastSquaresRankings(results)
+
+model_list <- list(RR_v1 = model_output,
+                   base = model_output_wo_HFA,
+                   step = model_step,
+                   logit = model_logit,
+                   step_HFA = model_step_HFA,
+                   logit_HFA = model_logit_HFA, 
+                   scoreBased = model_least_square)
+
+rankings <- buildRankingsDF(model_list, results)
 updated_at <- lubridate::now()
-save(games_through, updated_at, results, rankings, model_output, file = "../ShinyApps/MCLA_rankings/backup.RData")
+
+#source("tournaments.R")
+
+save(games_through, updated_at, results, rankings, model_output, d1_output, d2_output, file = "../ShinyApps/MCLA_rankings/backup.RData")
 time_stamp_file <- paste0("old data/backup_", format(now(), "%Y_%m_%d %H_%M_%S"), ".RData")
 
-save(games_through, updated_at, results, rankings, model_output, file = time_stamp_file)
+save(games_through, updated_at, results, rankings, model_output, d1_output, d2_output, file = time_stamp_file)
 
 system("touch ../ShinyApps/MCLA_rankings/restart.txt")
 
