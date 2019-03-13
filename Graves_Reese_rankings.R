@@ -111,19 +111,33 @@ predictGameOutcome <- function(home_team, visiting_team, output, simulations = 1
   return(home_win_probability)
 }
 
-extractRankings <- function(model_output, burn_in_rate = 0.1){
+extractRankings <- function(model_output, ...){
+  UseMethod("extractRankings", model_output)
+}
+
+extractRankings.list <- function(model_output, burn_in_rate = 0.1){
   ranking_matrix <- model_output$rankings
   simulations <- nrow(ranking_matrix)
   start_position <- floor(burn_in_rate * simulations)
   rankings <- sort(colMeans(ranking_matrix[start_position:simulations, ]), decreasing = TRUE)
+  rankings_df <- data.frame(School = names(rankings), 
+                            Score = rankings,
+                            Rank = 1:length(rankings))
+  return(rankings_df)
+}
+
+extractRankings.data.frame <- function(model_output){
+  rankings <- model_output %>%
+    arrange(desc(Score)) %>%
+    mutate(Rank = 1:nrow(.))
+
   return(rankings)
 }
 
 getFinishedResults <- function(df){
-  
   finished_games <- df %>%
     filter(!is.na(HomeGoals), HomeGoals != AwayGoals)
-  
+
   results <- finished_games %>%
     mutate(Neutral = GameType == "Neutral") %>%
     select(Home, Away, Date, AwayGoals, HomeGoals, Neutral) %>%
@@ -175,20 +189,60 @@ bound <- function(x, lb, ub){
   return(x)
 }
 
-buildRankingsDF <- function(model_output, results){
-  rankings <- data.frame(School = names(extractRankings(model_output)),
-                         Score  = extractRankings(model_output),
-                         Rank   = 1:length(extractRankings(model_output)),
-                         Division = 1,
-                         stringsAsFactors = FALSE)
-  record   <- ldply(rankings$School,  getRecord, results = results)
+buildRankingsDF <- function(model_output_list, results){
+  extractRankings(model_output_list[[1]])
   
-  rankings <- rankings %>%
-    bind_cols(record)
-  rankings$Division[rankings$School %in% d2teams] <- 2
-  rankings <- rankings %>% 
-    filter(School %in% union(d2teams, d1teams))
+  divisions <- data.frame(School = d1teams, 
+                          Division = 1, 
+                          stringsAsFactors = FALSE) %>%
+    bind_rows(data.frame(School = d2teams,
+                         Division = 2, 
+                         stringsAsFactors = FALSE))
+  
+  model_rankings <- model_output_list %>%
+    plyr::ldply( extractRankings) %>%
+    group_by(School) %>%
+    mutate(Average = mean(Rank),
+           AveScore = mean(Score)) %>%
+    ungroup() %>%
+    select(-Score) %>%
+    tidyr::spread(.id,Rank) %>%
+    as.data.frame() %>%
+    arrange(Average, desc(AveScore)) %>%
+    mutate(ReddRanking = 1:nrow(.)) %>%
+    select(-AveScore) %>%
+    select(School, ReddRanking, RR_v1, everything(), -Average, Average) %>%
+    mutate(School = as.character(School))
+  
+  record   <- ldply(model_rankings$School,  getRecord, results = results)
+  
+  rankings <- model_rankings %>%
+    bind_cols(record) %>%
+    inner_join(divisions, by = "School")
   return(rankings)
 }
 
+leastSquaresRankings <- function(game_results){
+  teams <- union(game_results$Home.Team, game_results$Away.Team)
+  
+  A <- matrix(0, nrow(game_results), length(teams))
+  colnames(A) <- teams
+  
+  for(i in 1:nrow(game_results)){
+    A[i, game_results$Home.Team[i]] <- 1
+    A[i, game_results$Away.Team[i]] <- -1
+  }
+  b <- game_results %>%
+    mutate(Difference = HomeGoals - AwayGoals) %>%
+    select(Difference) %>%
+    as.matrix()
+  Score <- MASS::ginv(A) %*% b
+  
+  ratings <- data.frame(School = colnames(A), 
+                        Score = Score) %>%
+    rename(Score = "Difference") %>%
+    arrange(desc(Score))
+  
+  return(ratings)
+}
 

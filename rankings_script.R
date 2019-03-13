@@ -9,18 +9,25 @@ results <- mcla2019todate %>%
   filter(!(Away == "Kennesaw State" & Home == "Georgia")) %>%
   getFinishedResults()
 
+iterations <- 50000
 
-model_output <- calculateRankings(results, 50000)
-model_output_wo_HFA <- calculateRankings(results, 50000, HFA = FALSE)
-model_step_HFA <- calculateRankings(results, 50000, WF_method = "step")
-model_logit_HFA <- calculateRankings(results, 50000, WF_method = "logit")
-model_step <- calculateRankings(results, 50000, WF_method = "step", HFA = FALSE)
-model_logit <- calculateRankings(results, 50000, WF_method = "logit", HFA = FALSE)
+model_output        <- calculateRankings(results, iterations)
+model_output_wo_HFA <- calculateRankings(results, iterations, HFA = FALSE)
+model_step          <- calculateRankings(results, iterations, WF_method = "step", HFA = FALSE)
+model_logit         <- calculateRankings(results, iterations, WF_method = "logit", HFA = FALSE)
+model_step_HFA      <- calculateRankings(results, iterations, WF_method = "step")
+model_logit_HFA     <- calculateRankings(results, iterations, WF_method = "logit")
+model_least_square  <- leastSquaresRankings(results)
 
-rankings <- buildRankingsDF(model_output, results)
-rankings_step <- buildRankingsDF(model_output_step, results)
-rankings_logit <- buildRankingsDF(model_output_logit, results)
+model_list <- list(RR_v1 = model_output,
+                   base = model_output_wo_HFA,
+                   step = model_step,
+                   logit = model_logit,
+                   step_HFA = model_step_HFA,
+                   logit_HFA = model_logit_HFA, 
+                   scoreBased = model_least_square)
 
+rankings <- buildRankingsDF(model_list, results)
 updated_at <- lubridate::now()
 
 #source("tournaments.R")
