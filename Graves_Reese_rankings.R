@@ -70,7 +70,8 @@ calculateRankings <- function(results, iters = 10000, WF_method = "absolute", HF
 
 calculateG <- function(results, rankings, sigma, alpha, team_name, S, prior_means){
   if(!is.null(team_name)){
-    results <- results[results$Home.Team == team_name | results$Away.Team == team_name, ]
+    results <- results %>%
+      filter(Home.Team == team_name | Away.Team == team_name)
   } 
   
   hfa <- rep(alpha, nrow(results))
@@ -136,7 +137,7 @@ extractRankings.data.frame <- function(model_output){
 getFinishedResults <- function(df){
   finished_games <- df %>%
     filter(!is.na(HomeGoals), HomeGoals != AwayGoals)
-  
+
   results <- finished_games %>%
     mutate(Neutral = GameType == "Neutral") %>%
     select(Home, Away, Date, AwayGoals, HomeGoals, Neutral) %>%

@@ -11,7 +11,6 @@ results <- mcla2019todate %>%
 
 iterations <- 50000
 
-
 model_output        <- calculateRankings(results, iterations)
 model_output_wo_HFA <- calculateRankings(results, iterations, HFA = FALSE)
 model_step          <- calculateRankings(results, iterations, WF_method = "step", HFA = FALSE)
