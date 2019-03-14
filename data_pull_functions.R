@@ -35,6 +35,9 @@ getSchedulePage <- function(i){
       mutate(HomeGoals = 0) 
   }
   
+  schedule <- schedule %>%
+    filter(HomeGoals + AwayGoals != 0)
+  
   return(schedule)
 }
 
@@ -44,12 +47,4 @@ readVenueTable <- function(venue_URL){
   return(table)
 }
 
-
-webpage <- htmlParse("http://mcla.us/schedule/2019")
-links <- getNodeSet(webpage, "//a/@href ")
-
-ldply(links, as.character) %>%
-  filter(str_detect(V1, "venue"))
-
-readHTMLTable(webpage)
 
