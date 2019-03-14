@@ -32,8 +32,6 @@ full_schedule <- full_schedule %>%
   left_join(venue_home_team, by = "VenueURL") %>%
   mutate(GameType = ifelse(Home == VenueHomeTeam, "Home", "Neutral"))
 
-full_schedule[full_schedule$Home=="Texas Christian",]
-
 # handle some special cases where logic says Neutral but is really Homefield
 full_schedule$GameType[full_schedule$Home=="Virginia Tech"
                    & full_schedule$Venue=="Virginia Tech - The Marching Virginians Center"] <- "Home"
@@ -72,4 +70,4 @@ full_schedule$GameType[full_schedule$Home=="Montana"
                    & full_schedule$Venue=="Fort Missoula Regional Park"] <- "Home"
 
 
-mcla2019todate <- cbind(full_schedule, scores)
+mcla2019todate <- full_schedule
