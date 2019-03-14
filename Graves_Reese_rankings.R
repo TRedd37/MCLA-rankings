@@ -1,5 +1,6 @@
 
 library(lubridate)
+source("WinFractions.R")
 
 calculateRankings <- function(results, iters = 10000, WF_method = "absolute", HFA = TRUE){
   
@@ -158,35 +159,6 @@ getRecord <- function(team, results){
   wins <-  wins + sum(away_games$Winning.Team == "Visiting")
   losses <- losses + sum(away_games$Winning.Team != "Visiting")
   return(c(Wins = wins, Losses = losses))
-}
-
-calculcateWinFraction <- function(df, method = "absolute"){
-  winFraction <- switch(
-    method,
-    "absolute" = as.numeric(df$HomeGoals > df$AwayGoals),
-    "relative" = df$HomeGoals / (df$AwayGoals + df$HomeGoals),
-    "step"     = calculateStepWF(df),
-    "logit"    = calculateLogitWF(df), 
-    stop("Not a valid method")
-  )
-  return(winFraction)
-}
-
-calculateStepWF <- function(df){
-  wf <- bound(.5 + (df$HomeGoals - df$AwayGoals) *.1, 0, 1)
-  return(wf)
-}
-
-calculateLogitWF <- function(df, denominator = 2){
-  differential <- df$HomeGoals - df$AwayGoals
-  wf <- exp(differential / denominator) / (1 + exp(differential / denominator))
-  return(wf)
-}
-
-bound <- function(x, lb, ub){
-  x[x < lb] <- lb
-  x[x > ub] <- ub
-  return(x)
 }
 
 buildRankingsDF <- function(model_output_list, results){
