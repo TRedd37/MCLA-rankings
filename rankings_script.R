@@ -17,7 +17,8 @@ model_step          <- calculateRankings(results, iterations, WF_method = "step"
 model_logit         <- calculateRankings(results, iterations, WF_method = "logit", HFA = FALSE)
 model_step_HFA      <- calculateRankings(results, iterations, WF_method = "step")
 model_logit_HFA     <- calculateRankings(results, iterations, WF_method = "logit")
-model_least_square  <- leastSquaresRankings(results)
+model_least_square  <- leastSquaresRankings(results, FALSE)
+model_LS_HFA        <- leastSquaresRankings(results, TRUE)
 
 model_list <- list(RR_v1 = model_output,
                    base = model_output_wo_HFA,
@@ -25,7 +26,8 @@ model_list <- list(RR_v1 = model_output,
                    logit = model_logit,
                    step_HFA = model_step_HFA,
                    logit_HFA = model_logit_HFA, 
-                   scoreBased = model_least_square)
+                   scoreBased = model_least_square,
+                   scoreBased_HFA = model_LS_HFA)
 
 rankings <- buildRankingsDF(model_list, results)
 updated_at <- lubridate::now()
