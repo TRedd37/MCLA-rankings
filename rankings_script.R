@@ -34,7 +34,8 @@ updated_at <- lubridate::now()
 
 #source("tournaments.R")
 
-save(games_through, updated_at, results, rankings, model_output, d1_output, d2_output, file = "../ShinyApps/MCLA_rankings/backup.RData")
+save(games_through, updated_at, results, rankings, model_output, d1_output, d2_output, 
+     file = "../ShinyApps/MCLA_rankings/backup.RData")
 time_stamp_file <- paste0("old data/backup_", format(now(), "%Y_%m_%d %H_%M_%S"), ".RData")
 
 save(games_through, updated_at, results, rankings, model_output, d1_output, d2_output, file = time_stamp_file)
