@@ -1,6 +1,4 @@
 
-source("data_pull_functions.R")
-
 teams_html <- htmlParse("http://mcla.us/teams")
 
 d1teams <- readHTMLTable(teams_html, header=FALSE, which=1, stringsAsFactors=FALSE)$V1
