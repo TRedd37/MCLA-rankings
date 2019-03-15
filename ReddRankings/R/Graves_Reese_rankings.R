@@ -1,7 +1,4 @@
 
-library(lubridate)
-source("WinFractions.R")
-
 calculateRankings <- function(results, iters = 10000, WF_method = "absolute", HFA = TRUE){
   
   results <- results %>%
@@ -95,11 +92,11 @@ calculateG <- function(results, rankings, sigma, alpha, team_name, S, prior_mean
 
 predictGameOutcome <- function(home_team, visiting_team, output, simulations = 10000, neutral = FALSE ){
   alpha = data.frame(alpha = output$alpha)
-  home_team_ratings     <- dplyr::sample_n(output$rankings, simulations, replace = TRUE)[, home_team]
-  visiting_team_ratings <- dplyr::sample_n(output$rankings, simulations, replace = TRUE)[ , visiting_team]
-  hfa                   <- dplyr::sample_n(alpha, simulations, replace = TRUE)
+  home_team_ratings     <- sample_n(output$rankings, simulations, replace = TRUE)[, home_team]
+  visiting_team_ratings <- sample_n(output$rankings, simulations, replace = TRUE)[ , visiting_team]
+  hfa                   <- sample_n(alpha, simulations, replace = TRUE)
   if(neutral){
-    hfa = dplyr::sample_n(data.frame(dummy = 0), simulations, replace = TRUE)
+    hfa = sample_n(data.frame(dummy = 0), simulations, replace = TRUE)
   }
 
   home_score <- exp(home_team_ratings + hfa)
@@ -172,13 +169,13 @@ buildRankingsDF <- function(model_output_list, results){
                          stringsAsFactors = FALSE))
   
   model_rankings <- model_output_list %>%
-    plyr::ldply( extractRankings) %>%
+    ldply( extractRankings) %>%
     group_by(School) %>%
     mutate(Average = mean(Rank),
            AveScore = mean(Score)) %>%
     ungroup() %>%
     select(-Score) %>%
-    tidyr::spread(.id,Rank) %>%
+    spread(.id,Rank) %>%
     as.data.frame() %>%
     arrange(Average, desc(AveScore)) %>%
     mutate(ReddRanking = 1:nrow(.)) %>%
@@ -213,7 +210,7 @@ leastSquaresRankings <- function(game_results, HFA = TRUE){
     mutate(Difference = HomeGoals - AwayGoals) %>%
     select(Difference) %>%
     as.matrix()
-  Score <- MASS::ginv(A) %*% b
+  Score <- ginv(A) %*% b
   
   ratings <- data.frame(School = colnames(A), 
                         Score = Score) %>%

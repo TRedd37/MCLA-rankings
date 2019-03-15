@@ -1,10 +1,4 @@
 
-library(XML)
-library(plyr)
-library(stringr)
-library(dplyr)
-library(rvest)
-
 getSchedulePage <- function(i){
   schedule_url  <- paste0("http://mcla.us/schedule/2019?page=", i)
   schedule_html <- htmlParse(schedule_url)

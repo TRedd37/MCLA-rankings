@@ -45,7 +45,7 @@ getModelID <- function(model_name, con){
     tbl("ModelIDs") %>%
     filter(ModelName == model_name) %>%
     select(ID) %>%
-    as.data.frame()
+    collect()
   
   if(length(model_id$ID) == 0){
     data.frame(ModelName = model_name) %>%

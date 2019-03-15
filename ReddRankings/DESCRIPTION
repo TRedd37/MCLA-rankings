@@ -1,0 +1,28 @@
+Package: ReddRankings
+Type: Package
+Title: Redd Rankings
+Version: 1.0
+Date: 2019-02-15
+Author: Taylor Redd
+Maintainer: <tredd37@gmail.com>
+Imports:
+	rvest,
+	xml2,
+	XML,
+	dplyr,
+	tidyr,
+	plyr,
+	MASS
+Suggests:
+Description: Package for calculating ReddRankings
+License: file LICENSE
+LazyLoad: yes
+URL: http://www.taylorredd.com.com
+Roxygen: list(wrap = FALSE)
+Collate:
+    'ReddRankings.R'
+    'data_pull_functions.R'
+    'database_connections.R'
+    'Graves_Reese_rankings.R'
+    'WinFractions.R'
+RoxygenNote: 6.1.1
