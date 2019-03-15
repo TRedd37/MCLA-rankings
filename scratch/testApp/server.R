@@ -13,11 +13,17 @@ pool <- dbPool(
   host = "reddrankings.cvjutlbtujzn.us-east-2.rds.amazonaws.com"
 )
 
+table <- pool %>%
+  tbl("ModelResults") %>%
+  as.data.frame()
+
+onStop(function() {
+  poolClose(pool)
+})
+
+
 shinyServer(function(input, output) {
-  output_rankings <- reactive({rankings %>% mutate(Rank = 1:nrow(rankings))})
-  output$rankings   <- renderTable({
-    pool %>%
-      tbl("testTable")
+  output$rankings   <- renderDataTable({table
     })
   # output$games      <- renderDataTable({results})
   # output$prediction <- renderText({

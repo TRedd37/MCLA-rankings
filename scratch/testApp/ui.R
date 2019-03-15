@@ -10,7 +10,7 @@ shinyUI(fluidPage(
   # p(paste0("Last Updated: ", updated_at)),
   mainPanel(
     tabsetPanel(
-      tabPanel("Rankings",  tableOutput("rankings") ) #,
+      tabPanel("Rankings",  dataTableOutput("rankings") ) #,
       # tabPanel("Predictions", 
       #          selectInput("homeTeam", 
       #                      label = "Select Team 1:", 
