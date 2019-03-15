@@ -1,0 +1,12 @@
+name: testapp
+title:
+username:
+account: tredd
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 793136
+bundleId: 1943188
+url: https://tredd.shinyapps.io/testapp/
+when: 1552677484.6757
+asMultiple: FALSE
+asStatic: FALSE
