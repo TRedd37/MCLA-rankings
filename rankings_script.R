@@ -2,8 +2,6 @@ games_through <- lubridate::now()
 source("data_pull.R")
 source("Graves_Reese_rankings.R")
 
-mcla2019todate$date <- parse_date_time(mcla2019todate$Date, "a b d")
-
 results <- mcla2019todate %>%
   filter(!(Away == "Florida" & Home == "North Florida")) %>%
   filter(!(Away == "Kennesaw State" & Home == "Georgia")) %>%
