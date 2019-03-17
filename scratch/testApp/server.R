@@ -2,6 +2,7 @@ library(shiny)
 library(pool)
 library(RMySQL)
 library(dplyr)
+library(tidyr)
 
 # load("backup.RData")
 
@@ -13,9 +14,31 @@ pool <- dbPool(
   host = "reddrankings.cvjutlbtujzn.us-east-2.rds.amazonaws.com"
 )
 
-table <- pool %>%
+max_timestamp <- pool %>%
   tbl("ModelResults") %>%
-  as.data.frame()
+  group_by(ModelID) %>%
+  summarize(maxTimestamp = max(Time, na.rm = TRUE))
+
+rankings_long <- pool %>%
+  tbl("ModelResults") %>%
+  left_join(max_timestamp, by = "ModelID") %>%
+  left_join(tbl(pool, "ModelIDs"), by = c(ModelID = "ID")) %>%
+  left_join(tbl(pool, "TeamIDs"), by = c(TeamID = "ID")) %>%
+  filter(Active == 1) %>%
+  filter(TIME == maxTimestamp) %>%
+  select(TeamName, ModelRank, ModelScore, ModelName) %>%
+  collect() %>%
+  group_by(TeamName) %>%
+  mutate(Average = mean(ModelRank),
+         AveScore = mean(ModelScore)) %>%
+  ungroup() %>%
+  select(-ModelScore) %>%
+  spread(ModelName, ModelRank) %>%
+  arrange(Average, desc(AveScore)) %>%
+  mutate(ReddRanking = 1:nrow(.)) %>%
+  select(-AveScore) %>%
+  rename(RR_v1 = "absolute_HFA")%>%
+  select(TeamName, ReddRanking, RR_v1, everything(), -Average, Average) 
 
 onStop(function() {
   poolClose(pool)
@@ -23,7 +46,7 @@ onStop(function() {
 
 
 shinyServer(function(input, output) {
-  output$rankings   <- renderDataTable({table
+  output$rankings   <- renderDataTable({rankings_long
     })
   # output$games      <- renderDataTable({results})
   # output$prediction <- renderText({
