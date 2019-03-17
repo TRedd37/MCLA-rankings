@@ -11,6 +11,7 @@
 #' @importFrom tidyr spread
 #' @importFrom plyr ldply
 #' @importFrom MASS ginv
+#' @importFrom lubridate parse_date_time now
 #' 
 #' @name ReddRankings
 NULL

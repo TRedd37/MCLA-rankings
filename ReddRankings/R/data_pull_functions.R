@@ -1,4 +1,4 @@
-
+#' @export
 getSchedulePage <- function(i){
   schedule_url  <- paste0("http://mcla.us/schedule/2019?page=", i)
   schedule_html <- htmlParse(schedule_url)
@@ -35,6 +35,8 @@ getSchedulePage <- function(i){
   return(schedule)
 }
 
+
+#' @export
 readVenueTable <- function(venue_URL){
   venue_webpage <-htmlParse(venue_URL)
   table <- readHTMLTable(venue_webpage, header=TRUE, which=1, stringsAsFactors=FALSE)

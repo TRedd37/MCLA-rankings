@@ -1,4 +1,4 @@
-
+#' @export
 calculateRankings <- function(results, iters = 10000, WF_method = "absolute", HFA = TRUE){
   
   results <- results %>%
@@ -109,6 +109,7 @@ predictGameOutcome <- function(home_team, visiting_team, output, simulations = 1
   return(home_win_probability)
 }
 
+#' @export
 extractRankings <- function(model_output, ...){
   UseMethod("extractRankings", model_output)
 }
@@ -132,6 +133,7 @@ extractRankings.data.frame <- function(model_output){
   return(rankings)
 }
 
+#' @export
 getFinishedResults <- function(df){
   finished_games <- df %>%
     filter(!is.na(HomeGoals), HomeGoals != AwayGoals)
@@ -158,6 +160,7 @@ getRecord <- function(team, results){
   return(c(Wins = wins, Losses = losses))
 }
 
+#' @export
 buildRankingsDF <- function(model_output_list, results){
   extractRankings(model_output_list[[1]])
   
@@ -169,7 +172,7 @@ buildRankingsDF <- function(model_output_list, results){
                          stringsAsFactors = FALSE))
   
   model_rankings <- model_output_list %>%
-    ldply( extractRankings) %>%
+    plyr::ldply( extractRankings) %>%
     group_by(School) %>%
     mutate(Average = mean(Rank),
            AveScore = mean(Score)) %>%
@@ -191,6 +194,7 @@ buildRankingsDF <- function(model_output_list, results){
   return(rankings)
 }
 
+#' @export
 leastSquaresRankings <- function(game_results, HFA = TRUE){
   teams <- union(game_results$Home.Team, game_results$Away.Team)
   

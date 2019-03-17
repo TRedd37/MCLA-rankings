@@ -1,4 +1,5 @@
 
+#' @export
 writeResultsToDatabase <- function(model_output, model_name, con){
   model_results <- extractRankings(model_output)
   model_id      <- getModelID(model_name, con)
@@ -52,7 +53,8 @@ getModelID <- function(model_name, con){
       dbWriteTable(conn = con, name = "ModelIDs", append = TRUE, row.names = FALSE)
     model_id <- con %>%
       tbl("ModelIDs") %>%
-      filter(ModelName == model_name)
+      filter(ModelName == model_name) %>%
+      collect()
   }
   return(model_id$ID)
 }
