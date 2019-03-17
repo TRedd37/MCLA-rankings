@@ -8,7 +8,7 @@ results <- mcla2019todate %>%
   filter(!(Away == "Kennesaw State" & Home == "Georgia")) %>%
   getFinishedResults()
 
-iterations <- 1000
+iterations <- 50000
 
 model_step          <- calculateRankings(results, iterations, WF_method = "step", HFA = FALSE)
 model_step_HFA      <- calculateRankings(results, iterations, WF_method = "step")

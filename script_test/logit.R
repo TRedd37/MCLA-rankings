@@ -8,7 +8,7 @@ results <- mcla2019todate %>%
   filter(!(Away == "Kennesaw State" & Home == "Georgia")) %>%
   getFinishedResults()
 
-iterations <- 1000
+iterations <- 50000
 
 model_logit         <- calculateRankings(results, iterations, WF_method = "logit", HFA = FALSE)
 model_logit_HFA     <- calculateRankings(results, iterations, WF_method = "logit")
