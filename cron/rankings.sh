@@ -1,6 +1,6 @@
 #!/bin/bash
 
-Rscript absolute.R &
-Rscript least_squares.R &
-Rscript logit.R &
-Rscript step.R &
+/usr/local/bin/Rscript absolute.R &
+/usr/local/bin/Rscript least_squares.R &
+/usr/local/bin/Rscript logit.R &
+/usr/local/bin/Rscript step.R &
