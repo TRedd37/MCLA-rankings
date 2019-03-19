@@ -1,5 +1,5 @@
 library(ReddRankings)
-source("~/Github/MCLA-rankings/cron/config.R")
+source("config.R")
 
 model_logit         <- calculateRankings(results, iterations, WF_method = "logit", HFA = FALSE)
 model_logit_HFA     <- calculateRankings(results, iterations, WF_method = "logit")

@@ -1,5 +1,5 @@
 library(ReddRankings)
-source("~/Github/MCLA-rankings/cron/config.R")
+source("config.R")
 
 model_least_square  <- leastSquaresRankings(results, FALSE)
 model_LS_HFA        <- leastSquaresRankings(results, TRUE)
