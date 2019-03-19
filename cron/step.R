@@ -1,0 +1,15 @@
+library(ReddRankings)
+source("~/Github/MCLA-rankings/cron/config.R")
+
+model_step          <- calculateRankings(results, iterations, WF_method = "step", HFA = FALSE)
+model_step_HFA      <- calculateRankings(results, iterations, WF_method = "step")
+
+
+model_list <- list(step = model_step,
+                   step_HFA = model_step_HFA)
+
+for(i in seq_along(model_list)){
+  writeResultsToDatabase(model_list[[i]], names(model_list)[i], con)
+}
+
+dbDisconnect(con)
