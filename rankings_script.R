@@ -1,13 +1,14 @@
 games_through <- lubridate::now()
+library(ReddRankings)
+library(dplyr)
 source("data_pull.R")
-source("Graves_Reese_rankings.R")
 
 results <- mcla2019todate %>%
   filter(!(Away == "Florida" & Home == "North Florida")) %>%
   filter(!(Away == "Kennesaw State" & Home == "Georgia")) %>%
   getFinishedResults()
 
-iterations <- 50000
+iterations <- 50
 
 model_output        <- calculateRankings(results, iterations)
 model_output_wo_HFA <- calculateRankings(results, iterations, HFA = FALSE)
@@ -18,14 +19,18 @@ model_logit_HFA     <- calculateRankings(results, iterations, WF_method = "logit
 model_least_square  <- leastSquaresRankings(results, FALSE)
 model_LS_HFA        <- leastSquaresRankings(results, TRUE)
 
-model_list <- list(RR_v1 = model_output,
-                   base = model_output_wo_HFA,
+model_list <- list(absolute_HFA = model_output,
+                   absolute = model_output_wo_HFA,
                    step = model_step,
                    logit = model_logit,
                    step_HFA = model_step_HFA,
                    logit_HFA = model_logit_HFA, 
                    scoreBased = model_least_square,
                    scoreBased_HFA = model_LS_HFA)
+
+for(i in seq_along(model_list)){
+  writeResultsToDatabase(model_list[[i]], names(model_list)[i], con)
+}
 
 rankings <- buildRankingsDF(model_list, results)
 updated_at <- lubridate::now()
