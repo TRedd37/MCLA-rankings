@@ -20,7 +20,7 @@ getSchedule <- function(year){
 getSchedulePage <- function(year, i){
   schedule_url  <- paste0("http://mcla.us/schedule/", year, "?page=", i)
   schedule_html <- htmlParse(schedule_url)
-  schedule      <-readHTMLTable(schedule_html, header=TRUE, which=1, 
+  schedule      <- readHTMLTable(schedule_html, header=TRUE, which=1, 
                                 stringsAsFactors=FALSE)
 
   venue_links <- read_html(schedule_url) %>%
@@ -83,6 +83,16 @@ readVenueTable <- function(venue_URL){
   table <- readHTMLTable(venue_webpage, header=TRUE, which=1, 
                          stringsAsFactors=FALSE)
   return(table)
+}
+
+getDivisions <- function(){
+  teams_html <- htmlParse("http://mcla.us/teams")
+  
+  d1teams <- readHTMLTable(teams_html, header=FALSE, which=1, stringsAsFactors=FALSE)$V1
+  d2teams <- readHTMLTable(teams_html, header=FALSE, which=2, stringsAsFactors=FALSE)$V1
+  output <- list(D1 = d1teams, 
+                 D2 = d2teams)
+  return(output)
 }
 
 

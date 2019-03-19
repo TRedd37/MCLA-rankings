@@ -1,6 +1,12 @@
 #' @export
 calculateRankings <- function(results, iters = 10000, WF_method = "absolute", HFA = TRUE){
   
+  divisions <- getDivisions()
+
+  raw_prior_means <- rep(c(0.75, -0.75), times = c(length(divisions$D1), 
+                                                   length(divisions$D2)))
+  names(raw_prior_means) <- c(divisions$D1, divisions$D2)
+  
   results <- results %>%
     mutate(HomeWinFraction = calculcateWinFraction(., WF_method))
   
@@ -162,12 +168,12 @@ getRecord <- function(team, results){
 
 #' @export
 buildRankingsDF <- function(model_output_list, results){
-  extractRankings(model_output_list[[1]])
+  divisions <- getDivisions()
   
-  divisions <- data.frame(School = d1teams, 
+  divisions <- data.frame(School = divisions$D1, 
                           Division = 1, 
                           stringsAsFactors = FALSE) %>%
-    bind_rows(data.frame(School = d2teams,
+    bind_rows(data.frame(School = divisions$D2,
                          Division = 2, 
                          stringsAsFactors = FALSE))
   
