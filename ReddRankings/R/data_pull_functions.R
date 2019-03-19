@@ -56,10 +56,34 @@ getSchedulePage <- function(year, i){
 
 
 #' @export
+getVenuesHomeTeam <- function(schedule, verbose = TRUE){
+  web_venues <- unique(schedule$VenueURL)
+  
+  fields_home_team <- "unknown"
+  for(i in 1:length(web_venues)){
+    games_table <- readVenueTable(web_venues[i])
+    if(is.numeric(games_table) || nrow(games_table) < 5 ){
+      if(verbose){
+        print(paste("unknown home team - ", web_venues[i]))
+      }
+      fields_home_team[i] <- "unknown"
+    } else {
+      fields_home_team[i] <- names(which.max(table(games_table$Home)))
+    }
+  }
+  
+  venue_home_team <- data.frame(VenueURL = web_venues, 
+                                VenueHomeTeam = fields_home_team, 
+                                stringsAsFactors = FALSE)
+  return(venue_home_team)
+}
+
 readVenueTable <- function(venue_URL){
   venue_webpage <-htmlParse(venue_URL)
-  table <- readHTMLTable(venue_webpage, header=TRUE, which=1, stringsAsFactors=FALSE)
+  table <- readHTMLTable(venue_webpage, header=TRUE, which=1, 
+                         stringsAsFactors=FALSE)
   return(table)
 }
+
 
 
