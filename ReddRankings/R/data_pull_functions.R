@@ -1,8 +1,27 @@
 #' @export
-getSchedulePage <- function(i){
-  schedule_url  <- paste0("http://mcla.us/schedule/2019?page=", i)
+ 
+getSchedule <- function(year){
+  schedule <- result <- data.frame()
+  
+  i=1
+  while(class(result) != "try-error"){
+    result <- try(getSchedulePage(year, i), silent = TRUE)
+    if(class(result) != "try-error"){
+      schedule <- schedule %>%
+        bind_rows(result)
+    }
+    i <- i + 1
+  }
+  return(schedule)
+}
+
+
+ 
+getSchedulePage <- function(year, i){
+  schedule_url  <- paste0("http://mcla.us/schedule/", year, "?page=", i)
   schedule_html <- htmlParse(schedule_url)
-  schedule      <-readHTMLTable(schedule_html, header=TRUE, which=1, stringsAsFactors=FALSE)
+  schedule      <-readHTMLTable(schedule_html, header=TRUE, which=1, 
+                                stringsAsFactors=FALSE)
 
   venue_links <- read_html(schedule_url) %>%
     html_nodes("table") %>%
