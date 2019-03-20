@@ -1,8 +1,10 @@
 library(ReddRankings)
 source("config.R")
 
-model_output        <- calculateRankings(results, iterations)
-model_output_wo_HFA <- calculateRankings(results, iterations, HFA = FALSE)
+model_output        <- calculateRankings(results, iterations,
+                                         quietly = TRUE)
+model_output_wo_HFA <- calculateRankings(results, iterations, HFA = FALSE,
+                                         quietly = TRUE)
 
 
 model_list <- list(absolute_HFA = model_output,

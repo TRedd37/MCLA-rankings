@@ -1,5 +1,7 @@
 #' @export
-calculateRankings <- function(results, iters = 10000, WF_method = "absolute", HFA = TRUE){
+calculateRankings <- function(results, iters = 10000, 
+                              WF_method = "absolute", HFA = TRUE,
+                              quietly = FALSE){
   
   divisions <- getDivisions()
 
@@ -25,11 +27,15 @@ calculateRankings <- function(results, iters = 10000, WF_method = "absolute", HF
   sigma <- rep(1, iters)
   alpha <- rep(0, iters)
   beta  <- rep(0, iters)
+  if(!quietly){
+    pb <- txtProgressBar(min = 0, max = iters, style = 3)
+  }
   
-  pb <- txtProgressBar(min = 0, max = iters, style = 3)
   
   for(i in 2:iters){
-    setTxtProgressBar(pb, i)
+    if(!quietly){
+      setTxtProgressBar(pb, i)
+    }
     rankings[i, ] <- rankings[i-1, ]
     for(team in teams){
       old_ranking <- rankings[i, team]

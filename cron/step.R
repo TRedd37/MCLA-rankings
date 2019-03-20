@@ -1,8 +1,11 @@
 library(ReddRankings)
 source("config.R")
 
-model_step          <- calculateRankings(results, iterations, WF_method = "step", HFA = FALSE)
-model_step_HFA      <- calculateRankings(results, iterations, WF_method = "step")
+model_step          <- calculateRankings(results, iterations, 
+                                         WF_method = "step", HFA = FALSE,
+                                         quietly = TRUE)
+model_step_HFA      <- calculateRankings(results, iterations, WF_method = "step",
+                                         quietly = TRUE)
 
 
 model_list <- list(step = model_step,
