@@ -1,4 +1,4 @@
-library(dplyr)
+library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
 library(ReddRankings)
 
 full_schedule <- getSchedule("2019")
