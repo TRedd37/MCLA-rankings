@@ -19,11 +19,16 @@ getSchedule <- function(year){
  
 getSchedulePage <- function(year, i){
   schedule_url  <- paste0("http://mcla.us/schedule/", year, "?page=", i)
-  schedule_html <- htmlParse(schedule_url)
-  schedule      <- readHTMLTable(schedule_html, header=TRUE, which=1, 
-                                stringsAsFactors=FALSE)
-
-  venue_links <- read_html(schedule_url) %>%
+  schedule_html <- read_html(schedule_url)
+  
+  gameIsScrimmage <- schedule_html %>%
+    html_nodes("table") %>%
+    html_nodes("tr") %>%
+    .[-1] %>%
+    plyr::ldply(rowIsScrimmage) %>%
+    rename(isScrimmage = "V1")
+  
+  venue_links <- schedule_html %>%
     html_nodes("table") %>%
     html_nodes("a") %>%
     html_attr("href") %>%
@@ -31,9 +36,12 @@ getSchedulePage <- function(year, i){
     filter(str_detect(., "venue")) %>%
     rename(VenueURL = ".")
 
-  schedule <- schedule %>%
+  schedule <- html_table(schedule_html) %>%
     bind_cols(venue_links) %>%
-    mutate(VenueURL = as.character(VenueURL))
+    bind_cols(gameIsScrimmage) %>%
+    filter(!isScrimmage) %>%
+    mutate(VenueURL = as.character(VenueURL)) %>%
+    select(isScrimmage)
   
   # is this a page of results or future games
   if("Score" %in% names(schedule)){
@@ -95,5 +103,12 @@ getDivisions <- function(){
   return(output)
 }
 
+rowIsScrimmage <- function(row){
+  row %>%
+    html_nodes("i") %>%
+    as.character() %>%
+    str_detect("scrimmage") %>%
+    any()
+}
 
 
