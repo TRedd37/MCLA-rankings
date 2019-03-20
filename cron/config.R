@@ -1,7 +1,7 @@
 iterations <- 50000
 library(RMySQL)
 library(dplyr)
-source("~/Github/MCLA-rankings/data_pull.R")
+source("../data_pull.R")
 
 results <- mcla2019todate %>%
   filter(!(Away == "Florida" & Home == "North Florida")) %>%
