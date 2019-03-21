@@ -21,8 +21,11 @@ URL: http://www.taylorredd.com.com
 Roxygen: list(wrap = FALSE)
 Collate:
     'ReddRankings.R'
+    'BayesBTmodel.R'
     'data_pull_functions.R'
     'database_connections.R'
-    'Graves_Reese_rankings.R'
+    'ExtractRankings.R'
+    'LeastSquares.R'
+    'utils.R'
     'WinFractions.R'
 RoxygenNote: 6.1.1
