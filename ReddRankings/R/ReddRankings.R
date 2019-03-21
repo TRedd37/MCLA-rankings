@@ -3,7 +3,7 @@
 #' 
 #' @description Package for calculating the Redd Rankings
 #' 
-#' @importFrom rvest html_nodes html_attr
+#' @importFrom rvest html_nodes html_attr html_table
 #' @importFrom xml2 read_html
 #' @importFrom XML htmlParse readHTMLTable
 #' @importFrom dplyr %>% select filter rename bind_cols mutate sample_n 
