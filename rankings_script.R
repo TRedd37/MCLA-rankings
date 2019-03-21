@@ -1,12 +1,8 @@
 games_through <- lubridate::now()
 library(ReddRankings)
 library(dplyr)
-source("data_pull.R")
 
-results <- mcla2019todate %>%
-  filter(!(Away == "Florida" & Home == "North Florida")) %>%
-  filter(!(Away == "Kennesaw State" & Home == "Georgia")) %>%
-  getFinishedResults()
+results <- getResults("2019")
 
 iterations <- 50
 
