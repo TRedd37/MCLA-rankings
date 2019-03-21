@@ -1,4 +1,3 @@
-library(ReddRankings)
 source("config.R")
 
 model_logit         <- calculateRankings(results, iterations, 

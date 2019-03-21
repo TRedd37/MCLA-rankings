@@ -1,7 +1,7 @@
+library(RMySQL, quietly = TRUE)
+library(ReddRankings)
+
 iterations <- 50000
-library(RMySQL)
-library(dplyr)
-source("../data_pull.R")
 
 results <- getResults("2019") 
 

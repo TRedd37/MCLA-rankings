@@ -1,4 +1,3 @@
-library(ReddRankings)
 source("config.R")
 
 model_step          <- calculateRankings(results, iterations, 
