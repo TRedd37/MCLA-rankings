@@ -13,6 +13,19 @@ getSchedule <- function(year){
     i <- i + 1
   }
   return(schedule)
+  
+  venue_home_team <- getVenuesHomeTeam(schedule, FALSE)
+  
+  results <- schedule %>% 
+    left_join(venue_home_team, by = "VenueURL") %>%
+    mutate(Neutral = Home != VenueHomeTeam) %>%
+    select(Home, Away, Date, AwayGoals, HomeGoals, Neutral) %>%
+    mutate(Date = parse_date_time(Date, "a b d")) %>%
+    rename(Home.Team = "Home") %>%
+    rename(Away.Team = "Away") %>%
+    mutate(Winning.Team = ifelse(AwayGoals > HomeGoals, "Visiting", "Home"))
+  
+  return(results)
 }
 
 

@@ -145,22 +145,6 @@ extractRankings.data.frame <- function(model_output){
   return(rankings)
 }
 
-#' @export
-getFinishedResults <- function(df){
-  finished_games <- df %>%
-    filter(!is.na(HomeGoals), HomeGoals != AwayGoals)
-
-  results <- finished_games %>%
-    mutate(Neutral = GameType == "Neutral") %>%
-    select(Home, Away, Date, AwayGoals, HomeGoals, Neutral) %>%
-    mutate(Date = parse_date_time(Date, "a b d")) %>%
-    rename(Home.Team = "Home") %>%
-    rename(Away.Team = "Away") %>%
-    mutate(Winning.Team = ifelse(AwayGoals > HomeGoals, "Visiting", "Home"))
-
-  return(results)
-}
-
 getRecord <- function(team, results){
   home_games <- subset(results, Home.Team == team)
   wins <- sum(home_games$Winning.Team == "Home")
