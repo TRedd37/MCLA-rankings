@@ -1,18 +1,16 @@
 #' @export
- 
-getSchedule <- function(year){
-  schedule <- result <- data.frame()
+ getResults <- function(year){
+  schedule <- getScheduleResults <- data.frame()
   
   i=1
-  while(class(result) != "try-error"){
-    result <- try(getSchedulePage(year, i), silent = TRUE)
-    if(class(result) != "try-error"){
+  while(class(getScheduleResults) != "try-error"){
+    getScheduleResults <- try(getSchedulePage(year, i), silent = TRUE)
+    if(class(getScheduleResults) != "try-error"){
       schedule <- schedule %>%
-        bind_rows(result)
+        bind_rows(getScheduleResults)
     }
     i <- i + 1
   }
-  return(schedule)
   
   venue_home_team <- getVenuesHomeTeam(schedule, FALSE)
   
@@ -27,8 +25,6 @@ getSchedule <- function(year){
   
   return(results)
 }
-
-
  
 getSchedulePage <- function(year, i){
   schedule_url  <- paste0("http://mcla.us/schedule/", year, "?page=", i)
@@ -54,7 +50,7 @@ getSchedulePage <- function(year, i){
     bind_cols(gameIsScrimmage) %>%
     filter(!isScrimmage) %>%
     mutate(VenueURL = as.character(VenueURL)) %>%
-    select(isScrimmage)
+    select(-isScrimmage)
   
   # is this a page of results or future games
   if("Score" %in% names(schedule)){
