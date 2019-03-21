@@ -3,7 +3,7 @@ library(ReddRankings)
 
 iterations <- 50000
 
-results <- getResults("2019") 
+results <- getResults("2019")
 
 con <- dbConnect(MySQL(),
                  "reddrankings",
