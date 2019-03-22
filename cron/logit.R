@@ -1,7 +1,7 @@
 source("config.R")
 
 model_logit         <- calculateRankings(results, iterations, 
-                                         WF_method = "logit", HFA = FALS,
+                                         WF_method = "logit", HFA = FALSE,
                                          quietly = TRUE)
 model_logit_HFA     <- calculateRankings(results, iterations, WF_method = "logit",
                                          quietly = TRUE)
