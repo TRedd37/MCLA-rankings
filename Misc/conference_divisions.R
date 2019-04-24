@@ -1,5 +1,7 @@
 library(rvest)
 library(stringr)
+library(pool)
+library(dplyr)
 
 conference_postfix <- "http://mcla.us/conferences" %>%
   read_html() %>%
@@ -18,7 +20,7 @@ conference_urls <- paste0("http://mcla.us", conference_postfix) %>%
              str_replace("/conference/", "") %>%
              toupper())
 
-plyr::ldply(conference_urls, foo, .id = "Conference") 
+team_info <- plyr::ldply(conference_urls, foo, .id = "Conference") 
 
 foo <- function(ll){
   d1 <- ll %>%
@@ -44,4 +46,20 @@ foo <- function(ll){
   return(output)
 }
 
+pool <- dbPool(
+  drv = RMySQL::MySQL(),
+  dbname = "reddrankings",
+  username = "shiny",
+  password = "guest",
+  host = "reddrankings.cvjutlbtujzn.us-east-2.rds.amazonaws.com"
+)
 
+pool %>%
+  tbl("TeamIDs") %>%
+  collect() %>%
+  full_join(team_info, by = c(TeamName = "School"), suffix = c(".x", "")) %>%
+  select(ID, TeamName, "Conference", "Division") %>%
+  rename(id = "ID") %>%
+  dbWriteTable(conn = con, name = "tempTable", append = TRUE, row.names = FALSE)
+
+            
