@@ -1,24 +1,29 @@
 
 #' @export
 writeResultsToDatabase <- function(model_output, model_name, con){
-  model_results <- extractRankings(model_output)
-  model_id      <- getModelID(model_name, con)
+  model_id <- getModelID(model_name, con)
+  team_ids <- con %>% tbl("TeamIDs") %>% collect()
+  time_stamp <- now()
   
-  team_ids <- con %>%
-    tbl("TeamIDs")
-  
-  model_results %>%
-    left_join(team_ids, by = c(School = "TeamName"), copy = TRUE) %>%
+  writeSimulationsToDatabase(model_output, model_id, team_ids, time_stamp, con)
+  #writeRankingsToDatabase(model_output, model_id, team_ids, time_stamp, con)
+}
+
+writeRankingsToDatabase <- function(model_output, team_ids, model_id, time_stamp, con){
+  model_output %>%
+    extractRankings() %>%
+    left_join(team_ids, by = c(School = "TeamName")) %>%
     createNewTeamIDs(con) %>%
     rename(TeamID = "ID") %>%
     rename(ModelRank = "Rank") %>%
     rename(ModelScore = "Score") %>%
     select(TeamID, ModelRank, ModelScore) %>%
-    mutate(Time = now()) %>%
+    mutate(Time = time_stamp) %>%
     mutate(ModelID = model_id) %>%
     dbWriteTable(conn = con, name = "ModelResults", append = TRUE, row.names = FALSE)
-  
+  invisible(NULL)
 }
+
 
 createNewTeamIDs <- function(df, con){
   na_teams <- df %>%
@@ -59,4 +64,36 @@ getModelID <- function(model_name, con){
   return(model_id$ID)
 }
 
+writeSimulationsToDatabase <- function(model_output, ...){
+  UseMethod("writeSimulationsToDatabase", model_output)
+}
+
+writeSimulationsToDatabase.list <- function(model_output, model_id, team_ids, 
+                                            time_stamp, con, burn_in = 0.1){
+  model_output$rankings %>%
+    dplyr::slice(-1:-floor(burn_in*nrow(.))) %>%
+    tidyr::gather(TeamName, Score) %>%
+    dplyr::left_join(team_ids, by = "TeamName") %>%
+    select(ID, Score) %>%
+    mutate(ModelID = model_id) %>%
+    mutate(Time = time_stamp) %>%
+    rename(TeamID = "ID") %>%
+    dbWriteTable(conn = con, name = "SimulationResults",
+                 append = TRUE, row.names = FALSE)
+  invisible(NULL)
+}
+
+writeSimulationsToDatabase.data.frame <- function(model_output, model_id, team_ids, 
+                                                  time_stamp, con){
+  model_output %>%
+    rename(TeamName = "School") %>%
+    dplyr::left_join(team_ids, by = "TeamName") %>%
+    select(ID, Score) %>%
+    mutate(ModelID = model_id) %>%
+    mutate(Time = time_stamp) %>%
+    rename(TeamID = "ID") %>%
+    dbWriteTable(conn = con, name = "SimulationResults", 
+                 append = TRUE, row.names = FALSE)
+  invisible(NULL)
+}
 
