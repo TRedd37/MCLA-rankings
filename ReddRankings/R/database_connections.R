@@ -6,7 +6,7 @@ writeResultsToDatabase <- function(model_output, model_name, con){
   time_stamp <- now()
   
   writeSimulationsToDatabase(model_output, model_id, team_ids, time_stamp, con)
-  #writeRankingsToDatabase(model_output, model_id, team_ids, time_stamp, con)
+  writeRankingsToDatabase(model_output, model_id, team_ids, time_stamp, con)
 }
 
 writeRankingsToDatabase <- function(model_output, team_ids, model_id, time_stamp, con){
