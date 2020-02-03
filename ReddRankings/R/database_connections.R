@@ -71,10 +71,10 @@ writeSimulationsToDatabase <- function(model_output, ...){
 writeSimulationsToDatabase.list <- function(model_output, model_id, team_ids, 
                                             time_stamp, con, burn_in = 0.1){
   model_output$rankings %>%
-    dplyr::slice(-1:-floor(burn_in * nrow(.))) %>%
-    tidyr::gather(TeamName, Score) %>%
+    slice(-1:-floor(burn_in * nrow(.))) %>%
+    gather(TeamName, Score) %>%
     mutate(TeamName = as.character(TeamName)) %>%
-    dplyr::left_join(team_ids, by = "TeamName") %>%
+    left_join(team_ids, by = "TeamName") %>%
     select(ID, Score) %>%
     mutate(ModelID = model_id) %>%
     mutate(Time = time_stamp) %>%
@@ -88,7 +88,7 @@ writeSimulationsToDatabase.data.frame <- function(model_output, model_id, team_i
                                                   time_stamp, con){
   model_output %>%
     mutate(TeamName = as.character(School)) %>%
-    dplyr::left_join(team_ids, by = "TeamName") %>%
+    left_join(team_ids, by = "TeamName") %>%
     select(ID, Score) %>%
     mutate(ModelID = model_id) %>%
     mutate(Time = time_stamp) %>%
