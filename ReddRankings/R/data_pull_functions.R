@@ -34,7 +34,7 @@ getSchedulePage <- function(year, i){
     html_nodes("table") %>%
     html_nodes("tr") %>%
     .[-1] %>%
-    plyr::ldply(rowIsScrimmage) %>%
+    ldply(rowIsScrimmage) %>%
     rename(isScrimmage = "V1")
   
   venue_links <- schedule_html %>%
@@ -96,7 +96,7 @@ getVenuesHomeTeam <- function(schedule, verbose = TRUE){
 }
 
 readVenueTable <- function(venue_URL){
-  venue_webpage <-htmlParse(venue_URL)
+  venue_webpage <- htmlParse(venue_URL)
   table <- readHTMLTable(venue_webpage, header=TRUE, which=1, 
                          stringsAsFactors=FALSE)
   return(table)
