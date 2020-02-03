@@ -10,14 +10,16 @@ extractRankings.list <- function(model_output, burn_in_rate = 0.1){
   rankings <- sort(colMeans(ranking_matrix[start_position:simulations, ]), decreasing = TRUE)
   rankings_df <- data.frame(School = names(rankings), 
                             Score = rankings,
-                            Rank = 1:length(rankings))
+                            Rank = 1:length(rankings), 
+                            stringsAsFactors = FALSE)
   return(rankings_df)
 }
 
 extractRankings.data.frame <- function(model_output){
   rankings <- model_output %>%
     arrange(desc(Score)) %>%
-    mutate(Rank = 1:nrow(.))
+    mutate(Rank = 1:nrow(.)) %>%
+    mutate(School = as.character(School))
   
   return(rankings)
 }
