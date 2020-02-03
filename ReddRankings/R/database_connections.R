@@ -5,11 +5,11 @@ writeResultsToDatabase <- function(model_output, model_name, con){
   team_ids <- con %>% tbl("TeamIDs") %>% collect()
   time_stamp <- now()
   
-  writeSimulationsToDatabase(model_output, model_id, team_ids, time_stamp, con)
+  # writeSimulationsToDatabase(model_output, model_id, team_ids, time_stamp, con)
   writeRankingsToDatabase(model_output, model_id, team_ids, time_stamp, con)
 }
 
-writeRankingsToDatabase <- function(model_output, team_ids, model_id, time_stamp, con){
+writeRankingsToDatabase <- function(model_output, model_id, team_ids, time_stamp, con){
   model_output %>%
     extractRankings() %>%
     left_join(team_ids, by = c(School = "TeamName")) %>%
@@ -71,8 +71,9 @@ writeSimulationsToDatabase <- function(model_output, ...){
 writeSimulationsToDatabase.list <- function(model_output, model_id, team_ids, 
                                             time_stamp, con, burn_in = 0.1){
   model_output$rankings %>%
-    dplyr::slice(-1:-floor(burn_in*nrow(.))) %>%
+    dplyr::slice(-1:-floor(burn_in * nrow(.))) %>%
     tidyr::gather(TeamName, Score) %>%
+    mutate(TeamName = as.character(TeamName)) %>%
     dplyr::left_join(team_ids, by = "TeamName") %>%
     select(ID, Score) %>%
     mutate(ModelID = model_id) %>%
@@ -86,7 +87,7 @@ writeSimulationsToDatabase.list <- function(model_output, model_id, team_ids,
 writeSimulationsToDatabase.data.frame <- function(model_output, model_id, team_ids, 
                                                   time_stamp, con){
   model_output %>%
-    rename(TeamName = "School") %>%
+    mutate(TeamName = as.character(School)) %>%
     dplyr::left_join(team_ids, by = "TeamName") %>%
     select(ID, Score) %>%
     mutate(ModelID = model_id) %>%
