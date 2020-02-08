@@ -2,7 +2,6 @@
 calculateRankings <- function(results, iters = 10000, 
                               WF_method = "absolute", HFA = TRUE,
                               quietly = FALSE){
-  
   divisions <- getDivisions()
 
   raw_prior_means <- rep(c(0.75, -0.75), times = c(length(divisions$D1), 
@@ -11,7 +10,7 @@ calculateRankings <- function(results, iters = 10000,
   
   results <- results %>%
     mutate(HomeWinFraction = calculcateWinFraction(., WF_method))
-  
+
   A = 15
   B = 10
   S = .15
@@ -77,7 +76,7 @@ calculateRankings <- function(results, iters = 10000,
 }
 
 
-
+#' @export
 calculateG <- function(results, rankings, sigma, alpha, team_name, S, prior_means){
   if(!is.null(team_name)){
     results <- results %>%

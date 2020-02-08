@@ -1,11 +1,28 @@
-
 #' @export
-writeResultsToDatabase <- function(model_output, model_name, con){
+writeResultsToDatabase <- function(model_outputs){
+  pool <- dbPool(
+    drv = RMariaDB::MariaDB(),
+    dbname = "reddrankings",
+    host = "reddrankings.cvjutlbtujzn.us-east-2.rds.amazonaws.com",
+    username = "tredd",
+    password = Sys.getenv("RDS_PASSWORD")
+  )
+  
+  for(i in seq_along(model_outputs)){
+    model_name <- names(model_outputs)[i]
+    writeResultsToDatabase(model_outputs[[i]], model_name, pool)
+  }
+  pool %>%
+    poolClose()
+  
+  invisible(NULL)
+}
+
+writeModelResultsToDatabase <- function(model_output, model_name, con){
   model_id <- getModelID(model_name, con)
   team_ids <- con %>% tbl("TeamIDs") %>% collect()
   time_stamp <- now()
   
-  # writeSimulationsToDatabase(model_output, model_id, team_ids, time_stamp, con)
   writeRankingsToDatabase(model_output, model_id, team_ids, time_stamp, con)
 }
 

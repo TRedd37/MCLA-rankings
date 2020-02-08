@@ -102,6 +102,7 @@ readVenueTable <- function(venue_URL){
   return(table)
 }
 
+#' @export
 getDivisions <- function(){
   teams_html <- htmlParse("http://mcla.us/teams")
   
