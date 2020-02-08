@@ -1,3 +1,15 @@
+library(pool)
+library(dbplyr)
+library(dplyr)
+
+pool <- dbPool(
+  drv = RMariaDB::MariaDB(),
+  dbname = "reddrankings",
+  host = "reddrankings.cvjutlbtujzn.us-east-2.rds.amazonaws.com",
+  username = "tredd",
+  password = Sys.getenv("RDS_PASSWORD")
+)
+
 base_rankings %>%
   filter(Time1 == today(tz = "America/Denver")) %>%
   select(-Time1)
