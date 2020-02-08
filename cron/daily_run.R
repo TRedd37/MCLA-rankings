@@ -12,7 +12,9 @@ model_options <- list(WF_method = c('logit', 'logit', 'step', 'step', 'absolute'
                       HFA = c(F,T,F,T,F,T))
 
 output <- foreach(i = 1:6, .packages = c("ReddRankings", "tidyverse", "dplyr")) %dopar% {
-  calculateRankings(results = results, iters = iterations, WF_method = model_options$WF_method[i], HFA = model_options$HFA[i])
+  calculateRankings(results = results, iters = iterations, 
+                    WF_method = model_options$WF_method[i], 
+                    HFA = model_options$HFA[i], quietly = TRUE)
 }
 names(output) <- c("logit", "logit_HFA", "step", "step_HFA", "absolute", "absolute_HFA")
 output[["scoreBased"]] <- leastSquaresRankings(results, FALSE)
