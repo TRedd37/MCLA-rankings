@@ -21,18 +21,23 @@ current_rankings <- pool %>%
   arrange(ranking_average) %>%
   left_join(teams, by = c(TeamID = "ID"))
 
-d1top25 <- current_rankings %>%
-  filter(Division == 1) %>%
-  ungroup() %>%
-  slice(1:25)
-
-d2top25 <- current_rankings %>%
-  filter(Division == 2) %>%
-  ungroup() %>%
-  slice(1:25)
+findTeamsMissingTwitter <- function(current_rankings, division){
+  missing_teams <- current_rankings %>%
+    filter(Division == !!division) %>%
+    ungroup() %>%
+    slice(1:25) %>%
+    filter(is.na(TwitterHandle)) %>%
+    mutate(output_string =  paste0(TeamName, " (", TeamID, ")")) %>%
+    pull(output_string) %>%
+    paste(collapse = ', ')
   
+  return(missing_teams)
+}
 
-arrange(TIME)
-  collect() %>%
-  mutate(Time = ymd_hms(TIME, tz = 'America/Denver')) %>%
-  filter(Time > floor_date(now(), 'year')) 
+missingD1 <- current_rankings %>%
+  findTeamsMissingTwitter(1)
+missingD2 <- current_rankings %>%
+  findTeamsMissingTwitter(2)
+
+DM_message <- paste0("Missing the following teams. D1: ", missingD1, "\n D2: ", missingD2)
+
