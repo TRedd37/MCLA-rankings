@@ -26,6 +26,7 @@ Collate:
     'database_connections.R'
     'ExtractRankings.R'
     'LeastSquares.R'
+    'twitter.R'
     'utils.R'
     'WinFractions.R'
 RoxygenNote: 6.1.1

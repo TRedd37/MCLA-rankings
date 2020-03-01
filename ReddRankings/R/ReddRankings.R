@@ -12,8 +12,11 @@
 #' @importFrom tidyr spread gather
 #' @importFrom plyr ldply
 #' @importFrom MASS ginv
-#' @importFrom lubridate parse_date_time now
+#' @importFrom lubridate parse_date_time now today days
 #' @importFrom stringr str_detect str_split
+#' @importFrom pool dbPool
+#' @importFrom RMariaDB MariaDB
+#' @importFrom rtweet post_message
 #' 
 #' @name ReddRankings
 NULL
