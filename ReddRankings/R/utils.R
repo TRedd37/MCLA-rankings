@@ -61,3 +61,22 @@ buildRankingsDF <- function(model_output_list, results){
     inner_join(divisions, by = "School")
   return(rankings)
 }
+
+getCurrentRankings <- function(connection){
+  teams <- connection %>%
+    tbl("TeamIDs") %>%
+    collect()
+  
+  current_rankings <- connection %>%
+    tbl("ModelResults") %>%
+    collect() %>%
+    group_by(ModelID) %>%
+    filter(TIME == max(TIME)) %>%
+    group_by(TeamID) %>%
+    summarize(ranking_average = mean(ModelRank)) %>%
+    arrange(ranking_average) %>%
+    left_join(teams, by = c(TeamID = "ID")) %>%
+    mutate(ReddRankings = 1:nrow(.))
+  
+  return(current_rankings)
+}

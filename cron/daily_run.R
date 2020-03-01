@@ -1,12 +1,14 @@
 library(pool)
 suppressMessages(library("doFuture"))
 library(ReddRankings)
+suppressMessages(library(dplyr))
 
 registerDoFuture()  ## tells foreach futures should be used
 plan(multisession)  ## specifies what type of futures
 iterations <-  50000
 
 results <- getResults("2020")
+pool <- createAWSConnection()
 
 model_options <- list(WF_method = c('logit', 'logit', 'step', 'step', 'absolute', 'absolute'),
                       HFA = c(F,T,F,T,F,T))
@@ -20,4 +22,11 @@ names(output) <- c("logit", "logit_HFA", "step", "step_HFA", "absolute", "absolu
 output[["scoreBased"]] <- leastSquaresRankings(results, FALSE)
 output[["scoreBased_HFA"]] <- leastSquaresRankings(results, TRUE)
 
-writeResultsToDatabase(output)
+output %>% 
+  writeResultsToDatabase(pool)
+
+pool %>%
+  twitterHandleChecks(30)
+
+pool %>%
+  poolClose()
