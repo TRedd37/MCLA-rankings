@@ -54,6 +54,29 @@ getBaseRankingsStrings <- function(current_rankings, division, n){
 }
 
 tweetRankings <- function(rankings_string, division){
+  tweets <- buildTweetOutput(rankings_string, division, send_dm = FALSE)
+  
+  suppressMessages(post_tweet(tweets[["first_text"]]))
+  Sys.sleep(2)
+  last_tweet_id <- get_timeline('reddrankings', 1)$status_id
+  suppressMessages(post_tweet(tweets[["reply_test"]], in_reply_to_status_id = last_tweet_id))
+  
+  invisible(NULL)
+}
+
+#' @export
+dmRankings <- function(connection, division){
+  current_rankings <- getCurrentRankings(connection)
+  
+  d1rankings <- current_rankings %>%
+    getBaseRankingsStrings(1, n)
+  DM_message <- buildTweetOutput(d1rankings, division, send_dm = TRUE)
+  post_message(DM_message, "TRedd")
+  
+  invisible(NULL)
+}
+
+buildTweetOutput <- function(rankings_string, division, send_dm = FALSE){
   cutt_off_date <- (today() - days(1)) %>%
     format(format = "%m/%d")
   base_intro <- paste0("Top 15 Division ", division, " through ", cutt_off_date, ":")
@@ -64,12 +87,12 @@ tweetRankings <- function(rankings_string, division){
   reply_text <- base_reply %>%
     paste(paste(rankings_string[16:25], collapse = '\n'), sep = "\n")
   
-  
-  post_tweet(first_text)
-  Sys.sleep(2)
-  last_tweet_id <- get_timeline('reddrankings', 1)$status_id
-  post_tweet(reply_text, in_reply_to_status_id = last_tweet_id)
-  
-  invisible(NULL)
+  if(send_dm){
+    output <- paste(first_text, reply_text, sep = "\n")
+  } else {
+    output <- list(first_text = first_text,
+                   reply_test = reply_text)
+  }
+  return(output)
 }
 

@@ -29,4 +29,7 @@ pool %>%
   twitterHandleChecks(30)
 
 pool %>%
+  dmRankings(1)
+
+pool %>%
   poolClose()
