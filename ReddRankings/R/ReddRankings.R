@@ -16,7 +16,7 @@
 #' @importFrom stringr str_detect str_split
 #' @importFrom pool dbPool
 #' @importFrom RMariaDB MariaDB
-#' @importFrom rtweet post_message
+#' @importFrom rtweet post_message post_tweet get_timeline
 #' 
 #' @name ReddRankings
 NULL
