@@ -65,7 +65,7 @@ tweetRankings <- function(rankings_string, division){
 }
 
 #' @export
-dmRankings <- function(connection, division){
+dmRankings <- function(connection, division, n = 25){
   current_rankings <- getCurrentRankings(connection)
   
   d1rankings <- current_rankings %>%
