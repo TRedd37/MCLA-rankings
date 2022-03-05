@@ -2,18 +2,19 @@ library(pool)
 suppressMessages(library("doFuture"))
 library(ReddRankings)
 suppressMessages(library(dplyr))
+library(doRNG)
 
 registerDoFuture()  ## tells foreach futures should be used
 plan(multisession)  ## specifies what type of futures
 iterations <-  50000
 
-results <- getResults("2020")
+results <- getResults("2022")
 pool <- createAWSConnection()
 
 model_options <- list(WF_method = c('logit', 'logit', 'step', 'step', 'absolute', 'absolute'),
                       HFA = c(F,T,F,T,F,T))
 
-output <- foreach(i = 1:6, .packages = c("ReddRankings", "tidyverse", "dplyr")) %dopar% {
+output <- foreach(i = 1:6, .packages = c("ReddRankings", "tidyverse", "dplyr")) %dorng% {
   calculateRankings(results = results, iters = iterations, 
                     WF_method = model_options$WF_method[i], 
                     HFA = model_options$HFA[i], quietly = TRUE)
