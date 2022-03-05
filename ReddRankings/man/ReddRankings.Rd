@@ -3,7 +3,6 @@
 \docType{package}
 \name{ReddRankings}
 \alias{ReddRankings}
-\alias{ReddRankings-package}
 \title{ReddRankings}
 \description{
 Package for calculating the Redd Rankings

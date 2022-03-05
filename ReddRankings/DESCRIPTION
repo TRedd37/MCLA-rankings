@@ -29,4 +29,4 @@ Collate:
     'twitter.R'
     'utils.R'
     'WinFractions.R'
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.2

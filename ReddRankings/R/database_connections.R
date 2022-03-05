@@ -110,11 +110,12 @@ writeSimulationsToDatabase.data.frame <- function(model_output, model_id, team_i
 #' @export
 createAWSConnection <- function(){
   pool <- dbPool(
-    drv = MariaDB(),
+    drv = RMariaDB::MariaDB(),
     dbname = "reddrankings",
     host = "reddrankings.cvjutlbtujzn.us-east-2.rds.amazonaws.com",
     username = "tredd",
-    password = Sys.getenv("RDS_PASSWORD")
+    password = Sys.getenv("RDS_PASSWORD"),
+    port = 3306
   )
   return(pool)
 }
