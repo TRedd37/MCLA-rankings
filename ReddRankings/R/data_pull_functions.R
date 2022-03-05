@@ -78,7 +78,7 @@ getVenuesHomeTeam <- function(schedule, verbose = TRUE){
   
   fields_home_team <- "unknown"
   for(i in 1:length(web_venues)){
-    games_table <- readVenueTable(web_venues[i])
+    games_table <- readVenueTable(web_venues[i])[[1]]
     if(is.numeric(games_table) || nrow(games_table) < 5 ){
       if(verbose){
         print(paste("unknown home team - ", web_venues[i]))
@@ -96,18 +96,20 @@ getVenuesHomeTeam <- function(schedule, verbose = TRUE){
 }
 
 readVenueTable <- function(venue_URL){
-  venue_webpage <- htmlParse(venue_URL)
-  table <- readHTMLTable(venue_webpage, header=TRUE, which=1, 
-                         stringsAsFactors=FALSE)
+  table <- venue_URL %>%
+    read_html() %>%
+    html_table(header = TRUE)
   return(table)
 }
 
 #' @export
 getDivisions <- function(){
-  teams_html <- htmlParse("http://mcla.us/teams")
+  teams_table <- "http://mcla.us/teams" %>%
+    read_html() %>%
+    html_table()
   
-  d1teams <- readHTMLTable(teams_html, header=FALSE, which=1, stringsAsFactors=FALSE)$V1
-  d2teams <- readHTMLTable(teams_html, header=FALSE, which=2, stringsAsFactors=FALSE)$V1
+  d1teams <- teams_table[[1]]
+  d2teams <- teams_table[[2]]
   output <- list(D1 = d1teams, 
                  D2 = d2teams)
   return(output)
