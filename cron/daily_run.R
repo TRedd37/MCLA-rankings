@@ -2,11 +2,11 @@ library(pool)
 suppressMessages(library("doFuture"))
 library(ReddRankings)
 suppressMessages(library(dplyr))
-library(doRNG)
+suppressMessages(library(doRNG))
 
 registerDoFuture()  ## tells foreach futures should be used
 plan(multisession)  ## specifies what type of futures
-iterations <-  50000
+iterations <-  10000
 
 
 pool <- createAWSConnection()
@@ -16,12 +16,13 @@ results <- all_results %>%
            Home.Team.Division != 3) %>%
   select(-c(Home.Team.Division, Away.Team.Division))
 
-output <- foreach(i = 1:6, .packages = c("ReddRankings", "tidyverse", "dplyr")) %dorng% {
 model_options <- list(WF_method = c('logit', 'logit', 
                                     'step', 'step', 
                                     'absolute', 'absolute'),
                       HFA = c(FALSE, TRUE, FALSE, TRUE, FALSE, TRUE))
 
+output <- foreach(i = 1:6, 
+                  .packages = c("ReddRankings", "tidyverse", "dplyr")) %dorng% {
   calculateRankings(results = results, iters = iterations, 
                     WF_method = model_options$WF_method[i], 
                     HFA = model_options$HFA[i], quietly = TRUE)
