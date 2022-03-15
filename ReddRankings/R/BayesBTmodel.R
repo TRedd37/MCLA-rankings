@@ -4,8 +4,9 @@ calculateRankings <- function(results, iters = 10000,
                               quietly = FALSE){
   divisions <- getDivisions()
 
-  raw_prior_means <- rep(c(0.75, -0.75), times = c(length(divisions$D1), 
-                                                   length(divisions$D2)))
+  raw_prior_means <- rep(c(0.75, -0.75), 
+                         times = c(length(divisions$D1), 
+                                   length(divisions$D2)))
   names(raw_prior_means) <- c(divisions$D1, divisions$D2)
   
   results <- results %>%
@@ -17,6 +18,10 @@ calculateRankings <- function(results, iters = 10000,
   candidate_sigma = .1
   
   teams <- unique(c(results$Home.Team, results$Away.Team))
+  team_ids <- c(results$Home.Team.ID,
+                results$Away.Team.ID) %>%
+    unique() %>%
+    sort()
   prior_means <- raw_prior_means[teams]
   prior_means[is.na(prior_means)] <- 0
   names(prior_means) <- teams
@@ -63,9 +68,11 @@ calculateRankings <- function(results, iters = 10000,
         alpha[i] <- alpha[i-1]
       }
     }
+    
+    rate <- B + (sum((rankings[i, ] - prior_means[colnames(rankings)]) ^2)/2)
   
     sigma[i] <- 1/rgamma(1, A + (length(teams)/2) , 
-                         rate = B + (sum((rankings[i, ] - prior_means[colnames(rankings)]) ^2)/2))
+                         rate = rate)
   }
   
   output <- list(rankings = as.data.frame(rankings),
