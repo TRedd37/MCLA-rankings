@@ -8,9 +8,13 @@ registerDoFuture()  ## tells foreach futures should be used
 plan(multisession)  ## specifies what type of futures
 iterations <-  50000
 
-results <- getResults("2022")
-pool <- createAWSConnection()
 
+pool <- createAWSConnection()
+all_results <- getResults("2022", pool) 
+results <- all_results %>%
+  filter(Away.Team.Division != 3 &
+           Home.Team.Division != 3) %>%
+  select(-c(Home.Team.Division, Away.Team.Division))
 
 output <- foreach(i = 1:6, .packages = c("ReddRankings", "tidyverse", "dplyr")) %dorng% {
 model_options <- list(WF_method = c('logit', 'logit', 
