@@ -14,7 +14,9 @@ all_results <- getResults("2022", pool)
 results <- all_results %>%
   filter(Away.Team.Division != 3 &
            Home.Team.Division != 3) %>%
-  select(-c(Home.Team.Division, Away.Team.Division))
+  select(-c(Home.Team.Division, Away.Team.Division)) %>%
+  distinct(Home.Team, Away.Team, Date, AwayGoals, HomeGoals, Neutral, 
+           Winning.Team, Home.Team.ID, Away.Team.ID)
 
 model_options <- list(WF_method = c('logit', 'logit', 
                                     'step', 'step', 
