@@ -32,7 +32,7 @@ output <- foreach(i = 1:6,
 names(output) <- c("logit", "logit_HFA", 
                    "step", "step_HFA", 
                    "absolute", "absolute_HFA")
-output[["scoreBased"]] <- leastSquaresRankings(results, FALSlkjlkjlkjjlkjE)
+output[["scoreBased"]] <- leastSquaresRankings(results, FALSE)
 output[["scoreBased_HFA"]] <- leastSquaresRankings(results, TRUE)
 
 output %>% 
